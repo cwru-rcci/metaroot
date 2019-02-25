@@ -1,0 +1,7 @@
+conf
+credentials
+venv
+.idea
+*.yml
+*.log
+*.sh
