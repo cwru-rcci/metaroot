@@ -65,7 +65,8 @@ class ManagementDaemon:
         # calls do not cause the server to stop
         try:
             return method(*args).to_transport_format()
-        except Exception:
+        except Exception as e:
+            self._logger.exception(e)
             return self.get_error_response(455)
 
     def consume_callback(self, ch, method, props, body):
