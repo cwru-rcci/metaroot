@@ -1,7 +1,9 @@
 conf
 credentials
 venv
+dist
 .idea
+MANIFEST.in
 *.yml
 *.log
 *.sh

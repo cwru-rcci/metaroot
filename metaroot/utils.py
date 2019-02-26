@@ -7,7 +7,17 @@ from importlib import import_module
 loggers = {}
 
 
-def get_logger(name: str, logfile="messages.log"):
+def get_log_level(level: str):
+    levels = {"DEBUG": logging.DEBUG,
+              "INFO": logging.INFO,
+              "WARN": logging.WARN,
+              "ERROR": logging.ERROR,
+              "CRITICAL": logging.CRITICAL,
+              "FATAL": logging.FATAL}
+    return levels[level]
+
+
+def get_logger(name: str, file_level="INFO", screen_level="INFO"):
     """
     Creates/caches loggers based on argument name
 
@@ -15,8 +25,10 @@ def get_logger(name: str, logfile="messages.log"):
     ----------
     name: str
         The name of the requested logger. Usually the name of the class.
-    logfile: str
-        The name of the file to log to
+    file_level: str
+        The logging verbosity level for messages written to the log file
+    screen_level: str
+        The logging verbosity level for messages written to the terminal
 
     Returns
     ----------
@@ -31,12 +43,12 @@ def get_logger(name: str, logfile="messages.log"):
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
         ch = logging.StreamHandler()
-        ch.setLevel(logging.CRITICAL)
+        ch.setLevel(get_log_level(screen_level))
         ch.setFormatter(formatter)
         logger.addHandler(ch)
 
-        fh = logging.FileHandler(logfile)
-        fh.setLevel(logging.DEBUG)
+        fh = logging.FileHandler("metaroot.log")
+        fh.setLevel(get_log_level(file_level))
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
@@ -84,9 +96,11 @@ def create_rpc_wrapper(clazz):
 
     # Get class name
     _, _, class_name = clazz.rpartition(".")
-    print("import metaroot.rpc.client\nfrom metaroot.common import Result\n\n\nclass {0}(metaroot.rpc.client.RPCClient):".format(class_name))
+    print("from metaroot.rpc.client import RPCCLient")
+    print("from metaroot.rpc.config import locate_config")
+    print("from metaroot.common import Result\n\n\nclass {0}(RPCClient):".format(class_name))
     print("    def __init__(self, config_file='client-config.yml'):")
-    print("        super().__init__(config_file)")
+    print("        super().__init__(locate_config(self.__class__.__name__))")
     print("")
 
     methods = inspect.getmembers(obj, inspect.ismethod)

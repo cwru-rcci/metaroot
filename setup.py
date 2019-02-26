@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="metaroot-sean-m",
+    name="metaroot",
     version="0.5.0",
     author="CWRU HPC Administrators",
     author_email="hpc-support@cwru.edu",
@@ -20,5 +20,9 @@ setuptools.setup(
         "Operating System :: POSIX",
         "Programming Language :: Python :: 3.5",
     ],
-    python_requires='~=3.5'
+    python_requires='~=3.5',
+    install_requires=[
+        'pika',
+        'yaml'
+    ]
 )

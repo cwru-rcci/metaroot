@@ -2,7 +2,7 @@
 import pika
 import uuid
 import yaml
-import metaroot.rpc.config
+from metaroot.rpc.config import Config
 import metaroot.utils
 from metaroot.common import Result
 
@@ -12,15 +12,14 @@ class RPCClient:
     A lightweight RPC client based on pika that passes YAML messages
     """
 
-    def __init__(self, config_file='client-config.yml'):
+    def __init__(self, config: Config):
         """
         Initialize a new RPC Client for use.
 
         Parameters
         ----------
-        config_file: str (default "client-config.yml")
-            The YAML file specifying configuration parameters. By defaul the client looks for a file "client-config.yml"
-            in the current working directory
+        config: Config
+            Connection properties for the RPC server
 
         Raises
         ----------
@@ -28,10 +27,6 @@ class RPCClient:
             If any underlying operations fail by raising an exception
 
         """
-        # Connection properties and credentials are in the config file
-        config = metaroot.rpc.config.Config()
-        config.load(config_file)
-
         # Pretty standard connection stuff
         credentials = pika.PlainCredentials(config.get_mq_user(), config.get_mq_pass())
         parameters = pika.ConnectionParameters(host=config.get_mq_host(),
@@ -53,7 +48,9 @@ class RPCClient:
         self.corr_id = None
         self.response = None
         self.queue = config.get_mq_queue_name()
-        self._logger = metaroot.utils.get_logger(RPCClient.__name__)
+        self._logger = metaroot.utils.get_logger(RPCClient.__name__,
+                                                 config.get_mq_file_verbosity(),
+                                                 config.get_mq_screen_verbosity())
 
     def __del__(self):
         """

@@ -1,7 +1,6 @@
 import unittest
 from metaroot.slurm.manager_rpc import SlurmManager
 
-
 class SlurmManagerTest(unittest.TestCase):
     """
     Integration tests for the SlurmManager class. Method names are self explanatory. Most methods run multiple tests

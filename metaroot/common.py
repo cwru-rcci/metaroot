@@ -1,3 +1,4 @@
+
 class Result:
     """
     A standard result wrapper to ensure uniformity of return types at the top level.
@@ -56,3 +57,4 @@ class Result:
             A new instance of Result initialized from the dictionary
         """
         return Result(obj["status"], obj["response"])
+

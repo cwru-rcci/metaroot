@@ -215,31 +215,34 @@ class SlurmManager:
     Implements methods to manage users and accounts in SLURM via the sacctmgr command.
     """
 
-    def __init__(self, logfile="messages.log"):
+    def __init__(self, quiet=False):
         """
-        Override default init to accept an optional log file name if we want to log to an alternative location
+        Override default init to accept optional arguments
 
         Parameters
         ----------
-        logfile : str
-            A log file path (default "messages.log")
+        quiet: bool
+            If True, suppress terminal output to critical and above. If False, output at info level to terminal
         """
-        self._logger = metaroot.utils.get_logger("SlurmManager", logfile)
+        screen_level = file_level = "INFO"
+        if quiet:
+            screen_level = "CRITICAL"
+
+        self._logger = metaroot.utils.get_logger("SlurmManager", file_level, screen_level)
 
     # Runs the argument command and returns the exist status. Attempts to suppress all output.
     def __run_cmd__(self, cmd: str):
-        self._logger.debug("run_cmd(%s)", cmd)
         cp = subprocess.run("cat credentials | sudo -S {0} > /dev/null 2>&1".format(cmd), shell=True)
         if cp.returncode != 0:
             self._logger.error("run_cmd(%s)", cmd)
             self._logger.error("Command failed with exit status %d", cp.returncode)
-
+        else:
+            self._logger.debug("run_cmd(%s)", cmd)
         return cp.returncode
 
     # Runs the argument command and returns the output as a string. returns None if the command did not exit with
     # status 0
     def __run_cmd2__(self, cmd: str):
-        self._logger.debug("run_cmd2(%s)", cmd)
         cp = subprocess.run("cat credentials | sudo -S {0}".format(cmd), shell=True, stdout=subprocess.PIPE)
 
         if cp.returncode != 0:
@@ -247,6 +250,7 @@ class SlurmManager:
             self._logger.error("Command failed with exit status %d", cp.returncode)
             return None
         else:
+            self._logger.debug("run_cmd2(%s)", cmd)
             self._logger.debug("run_cmd2-out: {0}".format(cp.stdout))
             return cp.stdout.decode('utf-8')
 
@@ -265,6 +269,7 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 if the operation failed (e.g., if the account already exists)
         """
+        self._logger.info("add_account {0}".format(account_atts))
         account = metaroot.slurm.manager.SlurmAccount(account_atts)
         cmd = "sacctmgr -i -Q create account {0}".format(account)
         status = self.__run_cmd__(cmd)
@@ -286,6 +291,8 @@ class SlurmManager:
             Result.response is a dictionary of key=value pairs corresponding to SLURM configuration parameters. If the
             operation fails, an empty dictionary is returned.
         """
+        self._logger.info("get_account {0}".format(name))
+
         cmd = "sacctmgr -P list account WithAssoc name='" + name + "' user='' format='Account,"+SlurmAccount.format_string()+"'"
         stdout = self.__run_cmd2__(cmd)
         account = {}
@@ -321,6 +328,8 @@ class SlurmManager:
             Result.response is an array of user names associated with the SLURM account. If the operation fails, an
             empty array is returned
         """
+        self._logger.info("get_members {0}".format(name))
+
         cmd = "sacctmgr -P list account WithAssoc name='" + name + "' format='User'"
         stdout = self.__run_cmd2__(cmd)
         members = []
@@ -354,6 +363,8 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 on error
         """
+        self._logger.info("update_account {0}".format(account_atts))
+
         account = metaroot.slurm.manager.SlurmAccount(account_atts)
         cmd = "sacctmgr -i modify account {0}".format(account.as_update_str())
         status = self.__run_cmd__(cmd)
@@ -375,6 +386,8 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 on error
         """
+        self._logger.info("delete_account {0}".format(name))
+
         # Get current account members
         get_members = self.get_members(name)
         if get_members.is_error():
@@ -406,6 +419,8 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 on error
         """
+        self._logger.info("exists_account {0}".format(name))
+
         cmd = "[ `sacctmgr -n list account name=" + name + " | wc -l` == 1 ]"
         status = self.__run_cmd__(cmd)
         return Result(status, None)
@@ -424,6 +439,8 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 on error
         """
+        self._logger.info("add_user {0}".format(user_atts))
+
         user = metaroot.slurm.manager.SlurmUser(user_atts)
         cmd = "sacctmgr -i create user {0}".format(user)
         status = self.__run_cmd__(cmd)
@@ -445,6 +462,8 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 on error
         """
+        self._logger.info("update_user {0}".format(user_atts))
+
         user = metaroot.slurm.manager.SlurmUser(user_atts)
         cmd = "sacctmgr -i modify user {0}".format(user.as_update_str())
         status = self.__run_cmd__(cmd)
@@ -468,6 +487,8 @@ class SlurmManager:
             user's configured attributes associated with each named account. If the operation fails, an empty dictionary
             will be returned.
         """
+        self._logger.info("get_user {0}".format(name))
+
         cmd = "sacctmgr -P list user WithAssoc name='" + name + "' format='Account,DefaultAccount," + SlurmAccount.format_string() + "'"
         stdout = self.__run_cmd2__(cmd)
         user = {}
@@ -504,6 +525,8 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 on error
         """
+        self._logger.info("delete_user {0}".format(name))
+
         cmd = "sacctmgr -i delete user name="+name
         status = self.__run_cmd__(cmd)
         return Result(status, None)
@@ -522,6 +545,8 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 on error
         """
+        self._logger.info("exists_user {0}".format(name))
+
         cmd = "[ `sacctmgr -n list user name=" + name + " | wc -l` == 1 ]"
         status = self.__run_cmd__(cmd)
         return Result(status, None)
@@ -542,6 +567,8 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 on error
         """
+        self._logger.info("set_user_default_account {0}, {1}".format(user_name, account_name))
+
         cmd = "sacctmgr -i modify user where name=" + user_name + " set defaultaccount=" + account_name
         status = self.__run_cmd__(cmd)
         return Result(status, None)
@@ -562,6 +589,8 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 on error
         """
+        self._logger.info("associate_user_to_account {0} {1}".format(user_name, account_name))
+
         cmd = "sacctmgr -i add user name='" + user_name + "' account='" + account_name + "'"
         status = self.__run_cmd__(cmd)
         return Result(status, None)
@@ -583,6 +612,8 @@ class SlurmManager:
             Result.status is 0 for success, >0 on error
             Result.response is True if user had their default group set to "bench", False otherwise
         """
+        self._logger.info("disassociate_user_from_account {0}, {1}".format(user_name, account_name))
+
         result = self.get_user(user_name)
         benched = False
 
@@ -596,6 +627,8 @@ class SlurmManager:
 
             # Move the user to the bench account
             benched = self.set_user_default_account(user_name, 'bench').is_success()
+            if benched:
+                self._logger.warn("disassociate_user_from_account {0}, {1} -> User was benched".format(user_name, account_name))
 
         # Remove the user affiliation
         cmd = "sacctmgr -i delete user name='" + user_name + "' account='" + account_name + "'"
@@ -619,6 +652,8 @@ class SlurmManager:
             Result.status is 0 for success, >0 on error
             Result.response is a list of user names that had their default account set to "bench" by the operation
         """
+        self._logger.info("disassociate_users_from_account {0}, {1}".format(user_names, account_name))
+
         global_status = 0
         affected = []
         for user_name in user_names:

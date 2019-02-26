@@ -138,7 +138,9 @@ class ManagementDaemon:
         config.load(config_file)
 
         # Setup our custom logging to use the class name processing the messages as its tag
-        self._logger = metaroot.utils.get_logger(config.get_mq_handler_class())
+        self._logger = metaroot.utils.get_logger(config.get_mq_handler_class(),
+                                                 config.get_mq_file_verbosity(),
+                                                 config.get_mq_screen_verbosity())
 
         # Pretty standard connection stuff (user, password, etc)
         credentials = pika.PlainCredentials(config.get_mq_user(), config.get_mq_pass())
