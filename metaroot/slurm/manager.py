@@ -617,10 +617,14 @@ class SlurmManager:
         result = self.get_user(user_name)
         benched = False
 
+        # Check if non-existent user name specified
+        if 'default' not in result.response:
+            self._logger.warn("attempt to disassociate user %s that does not exist", user_name)
+
         # If we are trying to remove the primary group affiliation of the user, set their primary affiliation to
         # the special reserve group 'bench', in which case the user will need to select a new default account for
         # themself
-        if result.response['default'] == account_name:
+        elif result.response['default'] == account_name:
             # This can fail if the user was already benched once before, so we ignore return status, but that could be
             # problematic if it fails for a different reason
             self.associate_user_to_account(user_name, 'bench')
