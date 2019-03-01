@@ -224,34 +224,38 @@ class SlurmManager:
         quiet: bool
             If True, suppress terminal output to critical and above. If False, output at info level to terminal
         """
-        screen_level = file_level = "INFO"
+        screen_level = file_level = "DEBUG"
         if quiet:
             screen_level = "CRITICAL"
 
-        self._logger = metaroot.utils.get_logger("SlurmManager", file_level, screen_level)
+        self._logger = metaroot.utils.get_logger("SlurmManager", "metaroot.log", file_level, screen_level)
 
     # Runs the argument command and returns the exist status. Attempts to suppress all output.
     def __run_cmd__(self, cmd: str):
-        cp = subprocess.run("cat credentials | sudo -S {0} > /dev/null 2>&1".format(cmd), shell=True)
+        cp = subprocess.run("/bin/bash -c \"{0}\"".format(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode != 0:
-            self._logger.error("run_cmd(%s)", cmd)
+            self._logger.error("CMD: {0}".format("/bin/bash -c \"{0}\"".format(cmd)))
+            self._logger.error("STDOUT: {0}".format(cp.stdout.decode("utf-8")))
+            self._logger.error("STDERR: {0}".format(cp.stderr.decode("utf-8")))
             self._logger.error("Command failed with exit status %d", cp.returncode)
         else:
-            self._logger.debug("run_cmd(%s)", cmd)
+            self._logger.debug("/bin/bash -c \"{0}\" returned {1}".format(cmd, cp.returncode))
+
         return cp.returncode
 
     # Runs the argument command and returns the output as a string. returns None if the command did not exit with
     # status 0
     def __run_cmd2__(self, cmd: str):
-        cp = subprocess.run("cat credentials | sudo -S {0}".format(cmd), shell=True, stdout=subprocess.PIPE)
+        cp = subprocess.run("/bin/bash -c \"{0}\"".format(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         if cp.returncode != 0:
-            self._logger.error("run_cmd2(%s)", cmd)
+            self._logger.error("CMD: %s", cmd)
+            self._logger.error("STDOUT: {0}".format(cp.stdout.decode("utf-8")))
+            self._logger.error("STDERR: {0}".format(cp.stderr.decode("utf-8")))
             self._logger.error("Command failed with exit status %d", cp.returncode)
             return None
         else:
-            self._logger.debug("run_cmd2(%s)", cmd)
-            self._logger.debug("run_cmd2-out: {0}".format(cp.stdout))
+            self._logger.debug("/bin/bash -c \"{0}\" returned {1}".format(cmd, cp.returncode))
             return cp.stdout.decode('utf-8')
 
     # Add a new account
@@ -440,8 +444,14 @@ class SlurmManager:
             Result.status is 0 for success, >0 on error
         """
         self._logger.info("add_user {0}".format(user_atts))
-
         user = metaroot.slurm.manager.SlurmUser(user_atts)
+
+        # If the user already exists, do nothing
+        result = self.exists_user(user.name())
+        if result.is_success():
+            return Result(0, None)
+
+        # Otherwise, add the user
         cmd = "sacctmgr -i create user {0}".format(user)
         status = self.__run_cmd__(cmd)
         return Result(status, None)
@@ -547,9 +557,12 @@ class SlurmManager:
         """
         self._logger.info("exists_user {0}".format(name))
 
-        cmd = "[ `sacctmgr -n list user name=" + name + " | wc -l` == 1 ]"
-        status = self.__run_cmd__(cmd)
-        return Result(status, None)
+        cmd = "sacctmgr -n list user name=" + name
+        stdout = self.__run_cmd2__(cmd)
+        if stdout is not None:
+            if len(stdout.splitlines()) == 1:
+                return Result(0, None)
+        return Result(1, None)
 
     def set_user_default_account(self, user_name: str, account_name: str) -> Result:
         """
