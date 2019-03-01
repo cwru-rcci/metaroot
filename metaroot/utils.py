@@ -17,7 +17,7 @@ def get_log_level(level: str):
     return levels[level]
 
 
-def get_logger(name: str, file_level="INFO", screen_level="INFO"):
+def get_logger(name: str, file_path: str, file_level="INFO", screen_level="INFO"):
     """
     Creates/caches loggers based on argument name
 
@@ -47,7 +47,7 @@ def get_logger(name: str, file_level="INFO", screen_level="INFO"):
         ch.setFormatter(formatter)
         logger.addHandler(ch)
 
-        fh = logging.FileHandler("metaroot.log")
+        fh = logging.FileHandler(file_path)
         fh.setLevel(get_log_level(file_level))
         fh.setFormatter(formatter)
         logger.addHandler(fh)
