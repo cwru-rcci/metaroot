@@ -49,6 +49,7 @@ class RPCClient:
         self.response = None
         self.queue = config.get_mq_queue_name()
         self._logger = metaroot.utils.get_logger(RPCClient.__name__,
+                                                 config.get_log_file(),
                                                  config.get_mq_file_verbosity(),
                                                  config.get_mq_screen_verbosity())
 
@@ -56,8 +57,10 @@ class RPCClient:
         """
         Attempt to close the pika connection in the destructor if the connection is still open
         """
-        if self.connection.is_open:
+        try:
             self.connection.close()
+        except Exception as e:
+            self._logger.warn("closing connection raised an exception")
 
     def on_response(self, ch, method, props, body):
         """
