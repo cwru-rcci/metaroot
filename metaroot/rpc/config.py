@@ -12,7 +12,7 @@ class ConfigParams(Enum):
     MQHDLR = 'METAROOT_MQHDLR'
     MQSVER = 'METAROOT_MQSVER'
     MQFVER = 'METAROOT_MQFVER'
-
+    MRLOGF = 'METAROOT_LOGFILE'
 
 class Config:
 
@@ -65,6 +65,9 @@ class Config:
 
     def get_mq_file_verbosity(self):
         return self._data[ConfigParams.MQFVER.value]
+
+    def get_log_file(self):
+        return self._data[ConfigParams.MRLOGF.value]
 
 
 def locate_config(clazz: str):
