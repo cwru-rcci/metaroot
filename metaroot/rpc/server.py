@@ -2,11 +2,12 @@ import pika
 import yaml
 import sys
 import inspect
+import signal
 import metaroot.rpc.config
 import metaroot.utils
 
 
-class ManagementDaemon:
+class RPCServer:
     """
     Consumes AMQP messages and maps them to method calls of a configured "handler" class. The message queue connection
     parameters and handler class are specified via a config file so this daemon can be used as a general purpose RPC
@@ -16,6 +17,8 @@ class ManagementDaemon:
     def __init__(self):
         self._handler = None
         self._logger = None
+        self._connection = None
+        self._channel = None
 
     @staticmethod
     def get_error_response(status: int):
@@ -76,7 +79,7 @@ class ManagementDaemon:
         Parameters
         ----------
         ch:
-            Unused
+            Connection/Channel to send response
         method:
             Unused
         props:
@@ -121,6 +124,18 @@ class ManagementDaemon:
 
         return result["status"]
 
+    def shutdown(self, signum, frame):
+        self._logger.warn("Shutting down...")
+        try:
+            self._channel.stop_consuming()
+        except Exception:
+            self._logger.info("channel.stop_consuming() raised an exception")
+
+        try:
+            self._connection.close()
+        except Exception:
+            self._logger.info("connection.close() raised an exception")
+
     def start(self, config_file):
         """
         Calls a method of an object
@@ -140,35 +155,52 @@ class ManagementDaemon:
 
         # Setup our custom logging to use the class name processing the messages as its tag
         self._logger = metaroot.utils.get_logger(config.get_mq_handler_class(),
+                                                 config.get_log_file(),
                                                  config.get_mq_file_verbosity(),
                                                  config.get_mq_screen_verbosity())
 
         # Pretty standard connection stuff (user, password, etc)
         credentials = pika.PlainCredentials(config.get_mq_user(), config.get_mq_pass())
         parameters = pika.ConnectionParameters(config.get_mq_host(), config.get_mq_port(), '/', credentials)
-        connection = pika.BlockingConnection(parameters)
-        channel = connection.channel()
+        self._connection = pika.BlockingConnection(parameters)
+        self._channel = self._connection.channel()
 
         # Only receive messages if idle
-        channel.basic_qos(prefetch_count=1)
+        self._channel.basic_qos(prefetch_count=1)
 
         # Instantiate an instance of the class specified in the config file that will process messages
         self._handler = metaroot.utils.instantiate_object_from_class_path(config.get_mq_handler_class())
 
         # Attach the callback to handle messages
-        channel.basic_consume(self.consume_callback,
-                              queue=config.get_mq_queue_name())
+        self._channel.basic_consume(self.consume_callback,
+                                    queue=config.get_mq_queue_name())
 
-        self._logger.info('starting consume loop for messages of type "%s"...', config.get_mq_queue_name())
-        channel.start_consuming()
+        # We want to exit gracefully if a SIGTERM is sent, so configure a handler
+        signal.signal(signal.SIGTERM, self.shutdown)
+
+        # Consume messages, attempting to exit gracefully
+        try:
+            self._logger.info('starting consume loop for messages of type "%s"...', config.get_mq_queue_name())
+            self._channel.start_consuming()
+        except KeyboardInterrupt as e:
+            self._logger.warn("Interrupted by keyboard input.")
+        except IOError as e:
+            if e.errno == 9:
+                self._logger.warn("Bad file description. This is expected if the process was sent a SIGTERM, but " +
+                                  "could otherwise be indicative of a network problem")
+            else:
+                self._logger.exception(e)
+        except Exception as e:
+            self._logger.exception(e)
+        self.shutdown(1, None)
 
         return 1
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("USAGE: server.py <path to config file>")
+        print("USAGE: python3 -m metaroot.rpc.server <path to config file>")
         exit(1)
 
-    daemon = ManagementDaemon()
-    daemon.start(sys.argv[1])
+    server = RPCServer()
+    server.start(sys.argv[1])
