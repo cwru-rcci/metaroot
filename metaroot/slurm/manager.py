@@ -232,21 +232,23 @@ class SlurmManager:
 
     # Runs the argument command and returns the exist status. Attempts to suppress all output.
     def __run_cmd__(self, cmd: str):
-        cp = subprocess.run("/bin/bash -c \"{0}\"".format(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        args = cmd.split()
+        cp = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode != 0:
-            self._logger.error("CMD: {0}".format("/bin/bash -c \"{0}\"".format(cmd)))
+            self._logger.error("CMD: {0}".format("\"{0}\"".format(cmd)))
             self._logger.error("STDOUT: {0}".format(cp.stdout.decode("utf-8")))
             self._logger.error("STDERR: {0}".format(cp.stderr.decode("utf-8")))
             self._logger.error("Command failed with exit status %d", cp.returncode)
         else:
-            self._logger.debug("/bin/bash -c \"{0}\" returned {1}".format(cmd, cp.returncode))
+            self._logger.debug("\"{0}\" returned {1}".format(cmd, cp.returncode))
 
         return cp.returncode
 
     # Runs the argument command and returns the output as a string. returns None if the command did not exit with
     # status 0
     def __run_cmd2__(self, cmd: str):
-        cp = subprocess.run("/bin/bash -c \"{0}\"".format(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        args = cmd.split()
+        cp = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         if cp.returncode != 0:
             self._logger.error("CMD: %s", cmd)
@@ -255,8 +257,8 @@ class SlurmManager:
             self._logger.error("Command failed with exit status %d", cp.returncode)
             return None
         else:
-            self._logger.debug("/bin/bash -c \"{0}\" returned {1}".format(cmd, cp.returncode))
-            return cp.stdout.decode('utf-8')
+            self._logger.debug("\"{0}\" returned {1}".format(cmd, cp.returncode))
+            return cp.stdout.decode("utf-8")
 
     # Add a new account
     def add_account(self, account_atts: dict) -> Result:
@@ -275,7 +277,7 @@ class SlurmManager:
         """
         self._logger.info("add_account {0}".format(account_atts))
         account = metaroot.slurm.manager.SlurmAccount(account_atts)
-        cmd = "sacctmgr -i -Q create account {0}".format(account)
+        cmd = "/usr/bin/sacctmgr -i -Q create account {0}".format(account)
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
@@ -297,7 +299,7 @@ class SlurmManager:
         """
         self._logger.info("get_account {0}".format(name))
 
-        cmd = "sacctmgr -P list account WithAssoc name='" + name + "' user='' format='Account,"+SlurmAccount.format_string()+"'"
+        cmd = "/usr/bin/sacctmgr -P list account WithAssoc name='" + name + "' user='' format='Account,"+SlurmAccount.format_string()+"'"
         stdout = self.__run_cmd2__(cmd)
         account = {}
 
@@ -334,7 +336,7 @@ class SlurmManager:
         """
         self._logger.info("get_members {0}".format(name))
 
-        cmd = "sacctmgr -P list account WithAssoc name='" + name + "' format='User'"
+        cmd = "/usr/bin/sacctmgr -P list account WithAssoc name='" + name + "' format='User'"
         stdout = self.__run_cmd2__(cmd)
         members = []
 
@@ -370,7 +372,7 @@ class SlurmManager:
         self._logger.info("update_account {0}".format(account_atts))
 
         account = metaroot.slurm.manager.SlurmAccount(account_atts)
-        cmd = "sacctmgr -i modify account {0}".format(account.as_update_str())
+        cmd = "/usr/bin/sacctmgr -i modify account {0}".format(account.as_update_str())
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
@@ -404,7 +406,7 @@ class SlurmManager:
             return Result(2, None)
 
         # Remove the account
-        cmd = "sacctmgr -i delete account name="+name
+        cmd = "/usr/bin/sacctmgr -i delete account name="+name
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
@@ -425,9 +427,12 @@ class SlurmManager:
         """
         self._logger.info("exists_account {0}".format(name))
 
-        cmd = "[ `sacctmgr -n list account name=" + name + " | wc -l` == 1 ]"
-        status = self.__run_cmd__(cmd)
-        return Result(status, None)
+        cmd = "/usr/bin/sacctmgr -n list account name=" + name
+        stdout = self.__run_cmd2__(cmd)
+        if stdout is not None:
+            if len(stdout.splitlines()) == 1:
+                return Result(0, None)
+        return Result(1, None)
 
     def add_user(self, user_atts: dict) -> Result:
         """
@@ -452,7 +457,7 @@ class SlurmManager:
             return Result(0, None)
 
         # Otherwise, add the user
-        cmd = "sacctmgr -i create user {0}".format(user)
+        cmd = "/usr/bin/sacctmgr -i create user {0}".format(user)
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
@@ -475,7 +480,7 @@ class SlurmManager:
         self._logger.info("update_user {0}".format(user_atts))
 
         user = metaroot.slurm.manager.SlurmUser(user_atts)
-        cmd = "sacctmgr -i modify user {0}".format(user.as_update_str())
+        cmd = "/usr/bin/sacctmgr -i modify user {0}".format(user.as_update_str())
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
@@ -499,7 +504,7 @@ class SlurmManager:
         """
         self._logger.info("get_user {0}".format(name))
 
-        cmd = "sacctmgr -P list user WithAssoc name='" + name + "' format='Account,DefaultAccount," + SlurmAccount.format_string() + "'"
+        cmd = "/usr/bin/sacctmgr -P list user WithAssoc name='" + name + "' format='Account,DefaultAccount," + SlurmAccount.format_string() + "'"
         stdout = self.__run_cmd2__(cmd)
         user = {}
 
@@ -537,7 +542,7 @@ class SlurmManager:
         """
         self._logger.info("delete_user {0}".format(name))
 
-        cmd = "sacctmgr -i delete user name="+name
+        cmd = "/usr/bin/sacctmgr -i delete user name="+name
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
@@ -557,7 +562,7 @@ class SlurmManager:
         """
         self._logger.info("exists_user {0}".format(name))
 
-        cmd = "sacctmgr -n list user name=" + name
+        cmd = "/usr/bin/sacctmgr -n list user name=" + name
         stdout = self.__run_cmd2__(cmd)
         if stdout is not None:
             if len(stdout.splitlines()) == 1:
@@ -582,7 +587,7 @@ class SlurmManager:
         """
         self._logger.info("set_user_default_account {0}, {1}".format(user_name, account_name))
 
-        cmd = "sacctmgr -i modify user where name=" + user_name + " set defaultaccount=" + account_name
+        cmd = "/usr/bin/sacctmgr -i modify user where name=" + user_name + " set defaultaccount=" + account_name
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
@@ -604,7 +609,7 @@ class SlurmManager:
         """
         self._logger.info("associate_user_to_account {0} {1}".format(user_name, account_name))
 
-        cmd = "sacctmgr -i add user name='" + user_name + "' account='" + account_name + "'"
+        cmd = "/usr/bin/sacctmgr -i add user name='" + user_name + "' account='" + account_name + "'"
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
@@ -648,7 +653,7 @@ class SlurmManager:
                 self._logger.warn("disassociate_user_from_account {0}, {1} -> User was benched".format(user_name, account_name))
 
         # Remove the user affiliation
-        cmd = "sacctmgr -i delete user name='" + user_name + "' account='" + account_name + "'"
+        cmd = "/usr/bin/sacctmgr -i delete user name='" + user_name + "' account='" + account_name + "'"
         status = self.__run_cmd__(cmd)
         return Result(status, benched)
 
