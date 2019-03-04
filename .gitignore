@@ -3,6 +3,7 @@ credentials
 venv
 dist
 .idea
+__pycache__
 MANIFEST.in
 *.yml
 *.log
