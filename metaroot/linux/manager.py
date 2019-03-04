@@ -19,13 +19,17 @@ class LinuxManager:
         """
         self._logger = metaroot.utils.get_logger("LinuxManager", logfile)
 
-    # Runs the argument command and returns the exit status. Attempts to suppress all output.
+    # Runs the argument command and returns the exist status. Attempts to suppress all output.
     def __run_cmd__(self, cmd: str):
-        self._logger.debug("run_cmd(%s)", cmd)
-        cp = subprocess.run("cat credentials | sudo -S {0} > /dev/null 2>&1".format(cmd), shell=True)
+        args = cmd.split()
+        cp = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if cp.returncode != 0:
-            self._logger.error("run_cmd(%s)", cmd)
+            self._logger.error("CMD: {0}".format("\"{0}\"".format(cmd)))
+            self._logger.error("STDOUT: {0}".format(cp.stdout.decode("utf-8")))
+            self._logger.error("STDERR: {0}".format(cp.stderr.decode("utf-8")))
             self._logger.error("Command failed with exit status %d", cp.returncode)
+        else:
+            self._logger.debug("\"{0}\" returned {1}".format(cmd, cp.returncode))
 
         return cp.returncode
 
