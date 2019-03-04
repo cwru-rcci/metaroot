@@ -184,9 +184,9 @@ class SlurmManagerTest(unittest.TestCase):
         result = sam.add_user(test_user)
         self.assertEqual(True, result.is_success())
 
-        # Assert fail when user already exists
+        # Assert success when user already exists (nothing to do)
         result = sam.add_user(test_user)
-        self.assertEqual(False, result.is_success())
+        self.assertEqual(True, result.is_success())
 
         # Cleanup
         sam.delete_user(test_user["name"])
