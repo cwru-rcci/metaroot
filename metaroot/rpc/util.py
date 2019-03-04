@@ -1,5 +1,5 @@
 import pika
-from metaroot.rpc.config import Config
+from metaroot.config import Config
 
 
 def declare_queue(config_file: str, queue_name: str):

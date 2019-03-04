@@ -3,7 +3,7 @@ import yaml
 import sys
 import inspect
 import signal
-import metaroot.rpc.config
+import metaroot.config
 import metaroot.utils
 
 
@@ -150,7 +150,7 @@ class RPCServer:
         int
             Returns 1 on exit
         """
-        config = metaroot.rpc.config.Config()
+        config = metaroot.config.Config()
         config.load(config_file)
 
         # Setup our custom logging to use the class name processing the messages as its tag

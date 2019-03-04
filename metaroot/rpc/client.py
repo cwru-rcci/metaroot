@@ -2,7 +2,7 @@
 import pika
 import uuid
 import yaml
-from metaroot.rpc.config import Config
+from metaroot.config import Config
 import metaroot.utils
 from metaroot.common import Result
 

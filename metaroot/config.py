@@ -13,6 +13,7 @@ class ConfigParams(Enum):
     MQSVER = 'METAROOT_MQSVER'
     MQFVER = 'METAROOT_MQFVER'
     MRLOGF = 'METAROOT_LOGFILE'
+    MRHOOK = 'METAROOT_HOOKS'
 
 class Config:
 
@@ -68,6 +69,9 @@ class Config:
 
     def get_log_file(self):
         return self._data[ConfigParams.MRLOGF.value]
+
+    def get_hooks(self):
+        return self._data[ConfigParams.MRHOOK.value]
 
 
 def locate_config(clazz: str):

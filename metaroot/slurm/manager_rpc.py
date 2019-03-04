@@ -1,5 +1,5 @@
 from metaroot.rpc.client import RPCClient
-from metaroot.rpc.config import locate_config
+from metaroot.config import locate_config
 from metaroot.common import Result
 
 
