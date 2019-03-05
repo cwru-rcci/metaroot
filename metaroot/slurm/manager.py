@@ -260,8 +260,7 @@ class SlurmManager:
             self._logger.debug("\"{0}\" returned {1}".format(cmd, cp.returncode))
             return cp.stdout.decode("utf-8")
 
-    # Add a new account
-    def add_account(self, account_atts: dict) -> Result:
+    def add_group(self, account_atts: dict) -> Result:
         """
         Add a new SLURM account
 
@@ -281,7 +280,7 @@ class SlurmManager:
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
-    def get_account(self, name: str) -> Result:
+    def get_group(self, name: str) -> Result:
         """
         Retrieve the current configuration of an account
 
@@ -353,8 +352,7 @@ class SlurmManager:
 
         return Result(0, members)
 
-    # Change the properties of an account by assigning the key=value pairs passed
-    def update_account(self, account_atts: dict) -> Result:
+    def update_group(self, account_atts: dict) -> Result:
         """
         Change the configuration of a SLURM account
 
@@ -376,8 +374,7 @@ class SlurmManager:
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
-    # Remove and account and all member associations
-    def delete_account(self, name: str) -> Result:
+    def delete_group(self, name: str) -> Result:
         """
         Delete an account from SLURM. This operation manages migrating user default accounts away from the account
         to be deleted prior to attempting the delete operation.
@@ -401,7 +398,7 @@ class SlurmManager:
 
         # Remove users linked to the account first. This is a complex operation because it has to change primary
         # user account affiliations before removing the account below
-        remove_members = self.disassociate_users_from_account(get_members.response, name)
+        remove_members = self.disassociate_users_from_group(get_members.response, name)
         if remove_members.is_error():
             return Result(2, None)
 
@@ -410,8 +407,7 @@ class SlurmManager:
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
-    # Test if an account exists
-    def exists_account(self, name: str) -> Result:
+    def exists_group(self, name: str) -> Result:
         """
         Test if a SLURM account exists with a specified name
 
@@ -569,7 +565,7 @@ class SlurmManager:
                 return Result(0, None)
         return Result(1, None)
 
-    def set_user_default_account(self, user_name: str, account_name: str) -> Result:
+    def set_user_default_group(self, user_name: str, account_name: str) -> Result:
         """
         Set a user's default account affiliation
 
@@ -591,7 +587,7 @@ class SlurmManager:
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
-    def associate_user_to_account(self, user_name: str, account_name: str) -> Result:
+    def associate_user_to_group(self, user_name: str, account_name: str) -> Result:
         """
         Associate an account with a user (grant membership)
 
@@ -613,7 +609,7 @@ class SlurmManager:
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
-    def disassociate_user_from_account(self, user_name: str, account_name: str) -> Result:
+    def disassociate_user_from_group(self, user_name: str, account_name: str) -> Result:
         """
         Remove a user's association with an account (revoke membership)
 
@@ -645,10 +641,10 @@ class SlurmManager:
         elif result.response['default'] == account_name:
             # This can fail if the user was already benched once before, so we ignore return status, but that could be
             # problematic if it fails for a different reason
-            self.associate_user_to_account(user_name, 'bench')
+            self.associate_user_to_group(user_name, 'bench')
 
             # Move the user to the bench account
-            benched = self.set_user_default_account(user_name, 'bench').is_success()
+            benched = self.set_user_default_group(user_name, 'bench').is_success()
             if benched:
                 self._logger.warn("disassociate_user_from_account {0}, {1} -> User was benched".format(user_name, account_name))
 
@@ -657,7 +653,7 @@ class SlurmManager:
         status = self.__run_cmd__(cmd)
         return Result(status, benched)
 
-    def disassociate_users_from_account(self, user_names: list, account_name: str) -> Result:
+    def disassociate_users_from_group(self, user_names: list, account_name: str) -> Result:
         """
         Remove a user's association with an account (revoke membership)
 
@@ -679,7 +675,7 @@ class SlurmManager:
         global_status = 0
         affected = []
         for user_name in user_names:
-            result = self.disassociate_user_from_account(user_name, account_name)
+            result = self.disassociate_user_from_group(user_name, account_name)
             global_status = global_status + result.status
             if result.response:
                 affected.append(user_name)
