@@ -1,6 +1,8 @@
 import sys
 import logging
 import inspect
+import datetime
+import time
 from importlib import import_module
 
 
@@ -96,10 +98,20 @@ def create_rpc_wrapper(clazz):
 
     # Get class name
     _, _, class_name = clazz.rpartition(".")
-    print("from metaroot.rpc.client import RPCCLient")
-    print("from metaroot.rpc.config import locate_config")
-    print("from metaroot.common import Result\n\n\nclass {0}(RPCClient):".format(class_name))
-    print("    def __init__(self, config_file='client-config.yml'):")
+
+    # Output headers
+    dt = datetime.datetime.now()
+    print("from metaroot.rpc.client import RPCClient")
+    print("from metaroot.config import locate_config")
+    print("from metaroot.common import Result")
+    print("")
+    print("")
+    print("class {0}(RPCClient):".format(class_name))
+    print("    \"\"\"")
+    print("    RPC wrapper for {0}".format(clazz))
+    print("    Auto-generated {0}".format(dt.isoformat()))
+    print("    \"\"\"")
+    print("    def __init__(self):")
     print("        super().__init__(locate_config(self.__class__.__name__))")
     print("")
 
@@ -117,7 +129,7 @@ def create_rpc_wrapper(clazz):
         try:
             method = getattr(obj, method_name)
         except AttributeError:
-            print("The method {0} is not defined on the argument object {1}".format(method_name, type(obj).__name__))
+            print("The method {0} is not defined on the argument class {1}".format(method_name, type(obj).__name__))
             exit(1)
 
         # Validate arguments match the method signature
