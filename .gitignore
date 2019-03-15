@@ -6,6 +6,9 @@ dist
 __pycache__
 MANIFEST.in
 *.yml
+*.yaml
 *.log
 *.sh
 *.pyc
+*.db
+*.html
