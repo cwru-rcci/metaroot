@@ -233,7 +233,13 @@ class SlurmManager:
     # Runs the argument command and returns the exist status. Attempts to suppress all output.
     def __run_cmd__(self, cmd: str):
         args = cmd.split()
-        cp = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            cp = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except Exception as e:
+            self._logger.error("The command could not be run")
+            self._logger.exception(e)
+            return 456
+
         if cp.returncode != 0:
             self._logger.error("CMD: {0}".format("\"{0}\"".format(cmd)))
             self._logger.error("STDOUT: {0}".format(cp.stdout.decode("utf-8")))
@@ -248,7 +254,13 @@ class SlurmManager:
     # status 0
     def __run_cmd2__(self, cmd: str):
         args = cmd.split()
-        cp = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        try:
+            cp = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except Exception as e:
+            self._logger.error("The command could not be run")
+            self._logger.exception(e)
+            return None
 
         if cp.returncode != 0:
             self._logger.error("CMD: %s", cmd)
@@ -260,13 +272,13 @@ class SlurmManager:
             self._logger.debug("\"{0}\" returned {1}".format(cmd, cp.returncode))
             return cp.stdout.decode("utf-8")
 
-    def add_group(self, account_atts: dict) -> Result:
+    def add_group(self, group_atts: dict) -> Result:
         """
         Add a new SLURM account
 
         Parameters
         ----------
-        account_atts : dict
+        group_atts : dict
             Properties defining the SLURM account
 
         Returns
@@ -274,8 +286,8 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 if the operation failed (e.g., if the account already exists)
         """
-        self._logger.info("add_account {0}".format(account_atts))
-        account = metaroot.slurm.manager.SlurmAccount(account_atts)
+        self._logger.info("add_account {0}".format(group_atts))
+        account = metaroot.slurm.manager.SlurmAccount(group_atts)
         cmd = "/usr/bin/sacctmgr -i -Q create account {0}".format(account)
         status = self.__run_cmd__(cmd)
         return Result(status, None)
@@ -352,13 +364,13 @@ class SlurmManager:
 
         return Result(0, members)
 
-    def update_group(self, account_atts: dict) -> Result:
+    def update_group(self, group_atts: dict) -> Result:
         """
         Change the configuration of a SLURM account
 
         Parameters
         ----------
-        account_atts: dict
+        group_atts: dict
             Properties defining a SLURM account to update. The name of the argument account must match the name of the
             account to update in the SLURM database.
 
@@ -367,9 +379,9 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 on error
         """
-        self._logger.info("update_account {0}".format(account_atts))
+        self._logger.info("update_account {0}".format(group_atts))
 
-        account = metaroot.slurm.manager.SlurmAccount(account_atts)
+        account = metaroot.slurm.manager.SlurmAccount(group_atts)
         cmd = "/usr/bin/sacctmgr -i modify account {0}".format(account.as_update_str())
         status = self.__run_cmd__(cmd)
         return Result(status, None)
@@ -565,7 +577,7 @@ class SlurmManager:
                 return Result(0, None)
         return Result(1, None)
 
-    def set_user_default_group(self, user_name: str, account_name: str) -> Result:
+    def set_user_default_group(self, user_name: str, group_name: str) -> Result:
         """
         Set a user's default account affiliation
 
@@ -573,7 +585,7 @@ class SlurmManager:
         ----------
         user_name : str
             SLURM user name
-        account_name : str
+        group_name : str
             SLURM account name
 
         Returns
@@ -581,13 +593,13 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 on error
         """
-        self._logger.info("set_user_default_account {0}, {1}".format(user_name, account_name))
+        self._logger.info("set_user_default_account {0}, {1}".format(user_name, group_name))
 
-        cmd = "/usr/bin/sacctmgr -i modify user where name=" + user_name + " set defaultaccount=" + account_name
+        cmd = "/usr/bin/sacctmgr -i modify user where name=" + user_name + " set defaultaccount=" + group_name
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
-    def associate_user_to_group(self, user_name: str, account_name: str) -> Result:
+    def associate_user_to_group(self, user_name: str, group_name: str) -> Result:
         """
         Associate an account with a user (grant membership)
 
@@ -595,7 +607,7 @@ class SlurmManager:
         ----------
         user_name : str
             SLURM user name
-        account_name : str
+        group_name : str
             SLURM account name
 
         Returns
@@ -603,13 +615,13 @@ class SlurmManager:
         Result
             Result.status is 0 for success, >0 on error
         """
-        self._logger.info("associate_user_to_account {0} {1}".format(user_name, account_name))
+        self._logger.info("associate_user_to_account {0} {1}".format(user_name, group_name))
 
-        cmd = "/usr/bin/sacctmgr -i add user name='" + user_name + "' account='" + account_name + "'"
+        cmd = "/usr/bin/sacctmgr -i add user name='" + user_name + "' account='" + group_name + "'"
         status = self.__run_cmd__(cmd)
         return Result(status, None)
 
-    def disassociate_user_from_group(self, user_name: str, account_name: str) -> Result:
+    def disassociate_user_from_group(self, user_name: str, group_name: str) -> Result:
         """
         Remove a user's association with an account (revoke membership)
 
@@ -617,7 +629,7 @@ class SlurmManager:
         ----------
         user_name : str
             SLURM user name
-        account_name : str
+        group_name : str
             SLURM account name
 
         Returns
@@ -626,7 +638,7 @@ class SlurmManager:
             Result.status is 0 for success, >0 on error
             Result.response is True if user had their default group set to "bench", False otherwise
         """
-        self._logger.info("disassociate_user_from_account {0}, {1}".format(user_name, account_name))
+        self._logger.info("disassociate_user_from_account {0}, {1}".format(user_name, group_name))
 
         result = self.get_user(user_name)
         benched = False
@@ -638,7 +650,7 @@ class SlurmManager:
         # If we are trying to remove the primary group affiliation of the user, set their primary affiliation to
         # the special reserve group 'bench', in which case the user will need to select a new default account for
         # themself
-        elif result.response['default'] == account_name:
+        elif result.response['default'] == group_name:
             # This can fail if the user was already benched once before, so we ignore return status, but that could be
             # problematic if it fails for a different reason
             self.associate_user_to_group(user_name, 'bench')
@@ -646,14 +658,14 @@ class SlurmManager:
             # Move the user to the bench account
             benched = self.set_user_default_group(user_name, 'bench').is_success()
             if benched:
-                self._logger.warn("disassociate_user_from_account {0}, {1} -> User was benched".format(user_name, account_name))
+                self._logger.warn("disassociate_user_from_account {0}, {1} -> User was benched".format(user_name, group_name))
 
         # Remove the user affiliation
-        cmd = "/usr/bin/sacctmgr -i delete user name='" + user_name + "' account='" + account_name + "'"
+        cmd = "/usr/bin/sacctmgr -i delete user name='" + user_name + "' account='" + group_name + "'"
         status = self.__run_cmd__(cmd)
         return Result(status, benched)
 
-    def disassociate_users_from_group(self, user_names: list, account_name: str) -> Result:
+    def disassociate_users_from_group(self, user_names: list, group_name: str) -> Result:
         """
         Remove a user's association with an account (revoke membership)
 
@@ -661,7 +673,7 @@ class SlurmManager:
         ----------
         user_names : list
             SLURM user names
-        account_name : str
+        group_name : str
             SLURM account name
 
         Returns
@@ -670,12 +682,12 @@ class SlurmManager:
             Result.status is 0 for success, >0 on error
             Result.response is a list of user names that had their default account set to "bench" by the operation
         """
-        self._logger.info("disassociate_users_from_account {0}, {1}".format(user_names, account_name))
+        self._logger.info("disassociate_users_from_account {0}, {1}".format(user_names, group_name))
 
         global_status = 0
         affected = []
         for user_name in user_names:
-            result = self.disassociate_user_from_group(user_name, account_name)
+            result = self.disassociate_user_from_group(user_name, group_name)
             global_status = global_status + result.status
             if result.response:
                 affected.append(user_name)
