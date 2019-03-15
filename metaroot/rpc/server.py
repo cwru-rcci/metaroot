@@ -9,12 +9,13 @@ import metaroot.utils
 
 class RPCServer:
     """
-    Consumes AMQP messages and maps them to method calls of a configured "handler" class. The message queue connection
-    parameters and handler class are specified via a config file so this daemon can be used as a general purpose RPC
-    server.
+    An RPC server based on pika that maps requests to methods of an object hosted by the server.
     """
 
     def __init__(self):
+        """
+        Instantiate a new RPCServer
+        """
         self._handler = None
         self._logger = None
         self._connection = None
@@ -22,6 +23,19 @@ class RPCServer:
 
     @staticmethod
     def get_error_response(status: int):
+        """
+        Convenience method to construct an error response that contains only an integer status.
+
+        Parameters
+        ----------
+        status: int
+            The error status
+
+        Returns
+        -------
+        dict
+
+        """
         return {"status": status, "response": None}
 
     def call_method(self, obj: object, message: dict):
@@ -101,23 +115,30 @@ class RPCServer:
         # the operation that is requested by the message
         result = {"status": 0, "response": None}
 
-        # Parse message body to object
+        # Parse message body as YAML
         try:
             message = yaml.safe_load(body)
         except yaml.YAMLError as exc:
             self._logger.error("YAML parsing error: %s", exc)
             self._logger.error(body.decode())
             result = self.get_error_response(450)
+            message = None
+
+        # Handle special case of the CLOSE_IMMEDIATELY message that shuts down the Server
+        if message == "CLOSE_IMMEDIATELY":
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            self._channel.stop_consuming()
+            return 0
 
         # Apply the handler method that maps to the request if message parsing succeeded
         if result["status"] == 0:
             result = self.call_method(self._handler, message)
 
-        # RPC response sent to callers private queue
+        # RPC response sent to callers private queue as YAML document
         ch.basic_publish(exchange='',
                          routing_key=props.reply_to,
                          properties=pika.BasicProperties(correlation_id=props.correlation_id),
-                         body=str(result))
+                         body=yaml.safe_dump(result))
 
         # Acknowledge message consumed
         ch.basic_ack(delivery_tag=method.delivery_tag)
@@ -136,22 +157,21 @@ class RPCServer:
         except Exception:
             self._logger.info("connection.close() raised an exception")
 
-    def start(self, config_file):
+    def start(self, config_key):
         """
         Calls a method of an object
 
         Parameters
         ----------
-        config_file: str
-            YAML configuration file the specifies connection parameters
+        config_key: str
+            Key identifying where to find options in the global configuration dict for this consumer
 
         Returns
         ----------
         int
             Returns 1 on exit
         """
-        config = metaroot.config.Config()
-        config.load(config_file)
+        config = metaroot.config.get_config(config_key)
 
         # Setup our custom logging to use the class name processing the messages as its tag
         self._logger = metaroot.utils.get_logger(config.get_mq_handler_class(),
@@ -161,9 +181,17 @@ class RPCServer:
 
         # Pretty standard connection stuff (user, password, etc)
         credentials = pika.PlainCredentials(config.get_mq_user(), config.get_mq_pass())
-        parameters = pika.ConnectionParameters(config.get_mq_host(), config.get_mq_port(), '/', credentials)
+        parameters = pika.ConnectionParameters(host=config.get_mq_host(),
+                                               port=config.get_mq_port(),
+                                               virtual_host='/',
+                                               credentials=credentials,
+                                               heartbeat=30)
         self._connection = pika.BlockingConnection(parameters)
         self._channel = self._connection.channel()
+
+        # Only servers declare queues (not the clients)
+        self._channel.queue_declare(config.get_mq_queue_name(),
+                                    durable=True)  # request that the queue be persisted to disk
 
         # Only receive messages if idle
         self._channel.basic_qos(prefetch_count=1)
@@ -199,7 +227,7 @@ class RPCServer:
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("USAGE: python3 -m metaroot.rpc.server <path to config file>")
+        print("USAGE: python3 -m metaroot.rpc.server <config key>")
         exit(1)
 
     server = RPCServer()
