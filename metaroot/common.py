@@ -1,4 +1,3 @@
-
 class Result:
     """
     A standard result wrapper to ensure uniformity of return types at the top level.
