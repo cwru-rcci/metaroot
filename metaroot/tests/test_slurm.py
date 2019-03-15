@@ -63,6 +63,7 @@ class SlurmManagerTest(unittest.TestCase):
 
         return ta_attr
 
+    #@unittest.skip
     def test_add_group(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -78,6 +79,7 @@ class SlurmManagerTest(unittest.TestCase):
         # Cleanup
         sam.delete_group(test_account["name"])
 
+    #@unittest.skip
     def test_update_group(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -101,6 +103,7 @@ class SlurmManagerTest(unittest.TestCase):
         # Cleanup
         sam.delete_group(test_account["name"])
 
+    #@unittest.skip
     def test_get_group(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -119,6 +122,7 @@ class SlurmManagerTest(unittest.TestCase):
         # Cleanup
         sam.delete_group(test_account["name"])
 
+    #@unittest.skip
     def test_get_members(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -147,6 +151,7 @@ class SlurmManagerTest(unittest.TestCase):
         sam.delete_user(test_user["name"])
         sam.delete_group(test_account["name"])
 
+    #@unittest.skip
     def test_delete_group(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -160,6 +165,7 @@ class SlurmManagerTest(unittest.TestCase):
         result = sam.delete_group(test_account["name"])
         self.assertEqual(False, result.is_success())
 
+    #@unittest.skip
     def test_exists_group(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -175,6 +181,7 @@ class SlurmManagerTest(unittest.TestCase):
         result = sam.delete_group(test_account["name"])
         self.assertEqual(False, result.is_success())
 
+    #@unittest.skip
     def test_add_user(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -193,6 +200,7 @@ class SlurmManagerTest(unittest.TestCase):
         sam.delete_user(test_user["name"])
         sam.delete_group(test_account["name"])
 
+    #@unittest.skip
     def test_associate_user_to_group(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -260,6 +268,7 @@ class SlurmManagerTest(unittest.TestCase):
     # user3 |  *
     #
     # We remove the members of group1 and expect that user1 and user3 will be benched, but user2 will not
+    #@unittest.skip
     def test_disassociate_users_from_group(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -299,6 +308,7 @@ class SlurmManagerTest(unittest.TestCase):
         sam.delete_group(test_account["name"])
         sam.delete_group(test_account2["name"])
 
+    #@unittest.skip
     def test_update_user(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -324,6 +334,7 @@ class SlurmManagerTest(unittest.TestCase):
         sam.delete_user(test_user["name"])
         sam.delete_group(test_account["name"])
 
+    #@unittest.skip
     def test_get_user(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -350,6 +361,7 @@ class SlurmManagerTest(unittest.TestCase):
         sam.delete_group(test_account2["name"])
         sam.delete_group(test_account["name"])
 
+    #@unittest.skip
     def test_delete_user(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -368,6 +380,7 @@ class SlurmManagerTest(unittest.TestCase):
         # Cleanup
         sam.delete_group(test_account["name"])
 
+    #@unittest.skip
     def test_exists_user(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
@@ -387,6 +400,7 @@ class SlurmManagerTest(unittest.TestCase):
         # Cleanup
         sam.delete_group(test_account["name"])
 
+    #@unittest.skip
     def test_set_user_default_group(self):
         sam = SlurmManager()
         test_account = SlurmManagerTest.get_test_account()
