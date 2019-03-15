@@ -5,6 +5,16 @@ class Result:
     """
 
     def __init__(self, status: int, response):
+        """
+        Initialize a new Result
+
+        Parameters
+        ----------
+        status: int
+            Numeric status of result (by convention 0 is success and all values >0 are errors)
+        response: object
+            An object composed of one or more primitives that constitutes a generic payload for data
+        """
         self.status = status
         self.response = response
 
