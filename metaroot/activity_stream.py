@@ -1,8 +1,9 @@
 import os
 import sqlite3
 import datetime
+import yaml
 from metaroot.config import get_config
-from metaroot.common import Result
+from metaroot.api.result import Result
 
 
 class ActivityStream:
@@ -70,7 +71,7 @@ class ActivityStream:
 
         Returns
         ---------
-        Result
+        metaroot.api.Result
             True for success
 
         Raises
@@ -81,9 +82,9 @@ class ActivityStream:
         return self._insert((datetime.datetime.now(),
                              ActivityStream.INFO,
                              action,
-                             str(params),
+                             yaml.safe_dump(params),
                              0,
-                              ""))
+                             ""))
 
     def error(self, action: str, params: object, result: Result) -> bool:
         """
@@ -95,12 +96,12 @@ class ActivityStream:
             A unique identifier for the action, usually ${method_name}:${class name}
         params : object
             The arguments to the method as scalar, list or dict
-        result: Result
+        result: metaroot.api.Result
             The Result of the failed operation that contains more granular information about the error
 
         Returns
         ---------
-        Result
+        metaroot.api.Result
             True for success
 
         Raises
@@ -111,9 +112,9 @@ class ActivityStream:
         return self._insert((datetime.datetime.now(),
                              ActivityStream.ERROR,
                              action,
-                             str(params),
+                             yaml.safe_dump(params),
                              result.status,
-                             str(result.response)))
+                             yaml.safe_dump(result.to_transport_format())))
 
     def record(self, action: str, params: object, result: Result) -> bool:
         """
@@ -125,12 +126,12 @@ class ActivityStream:
             A unique identifier for the action, usually ${method_name}:${class name}
         params : object
             The arguments to the method as scalar, list or dict
-        result: Result
+        result: metaroot.api.Result
             The Result of the operation
 
         Returns
         ---------
-        Result
+        metaroot.api.Result
             True for success
 
         Raises
