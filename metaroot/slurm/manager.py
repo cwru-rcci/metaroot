@@ -1,6 +1,6 @@
 import subprocess
 import metaroot.utils
-from metaroot.common import Result
+from metaroot.api.result import Result
 
 
 class SlurmAccount:
@@ -10,7 +10,7 @@ class SlurmAccount:
     command that can be executed by the shell. If constructor is passed an invalid attribute, raises an exception.
     """
 
-    # Defines the set of optional attributes that can be specified for a SLURM account
+    # Defines the SLURM schema in the target SLURM environment.
     valid_keys = {"Organization": True,
                   "Cluster": True,
                   "DefaultQOS": True,
@@ -444,7 +444,7 @@ class SlurmManager:
 
     def add_user(self, user_atts: dict) -> Result:
         """
-        Add a new SLURM user
+        Add a new SLURM user. If the user already exists it is no overwritten.
 
         Parameters
         ----------
@@ -455,6 +455,10 @@ class SlurmManager:
         ---------
         Result
             Result.status is 0 for success, >0 on error
+
+        See Also
+        --------
+        update_user
         """
         self._logger.info("add_user {0}".format(user_atts))
         user = metaroot.slurm.manager.SlurmUser(user_atts)
