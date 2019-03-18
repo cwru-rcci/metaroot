@@ -1,6 +1,6 @@
 import unittest
-from metaroot.api import EventAPI
-from metaroot.common import Result
+from metaroot.api.event_client import EventClient
+from metaroot.api.result import Result
 import metaroot.daemon
 
 sequence = 0
@@ -17,7 +17,7 @@ class OrderedHandlerTest:
 
 class AEventAPITest(unittest.TestCase):
     def test_api_add_group(self):
-        api = EventAPI()
+        api = EventClient()
         result = api.add_group({})
         self.assertEqual(0, result.status)
 
