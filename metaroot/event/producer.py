@@ -2,7 +2,7 @@
 import pika
 import pika.exceptions
 import yaml
-from metaroot.common import Result
+from metaroot.api.result import Result
 from metaroot.config import Config
 from metaroot.utils import get_logger
 
@@ -88,7 +88,7 @@ class Producer:
         except Exception as e:
             self._logger.warning("closing connection raised an exception")
 
-    def send(self, obj) -> Result:
+    def send(self, obj: object) -> Result:
         """
         Publish a message to server
 
