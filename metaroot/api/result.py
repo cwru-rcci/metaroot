@@ -66,4 +66,3 @@ class Result:
             A new instance of Result initialized from the dictionary
         """
         return Result(obj["status"], obj["response"])
-
