@@ -3,7 +3,8 @@ import pika
 import pika.exceptions
 import uuid
 import yaml
-from metaroot.common import Result
+import time
+from metaroot.api.result import Result
 from metaroot.config import Config
 from metaroot.utils import get_logger
 
@@ -173,7 +174,8 @@ class RPCClient:
                                                correlation_id=self.corr_id))
                 not_sent = False
             except pika.exceptions.ConnectionClosed as e:
-                self.logger.error("Failed to send on attempt %d because connection closed. Reconnecting...", attempts)
+                self.logger.info("Failed to send on attempt %d because connection closed. Reconnecting...", attempts)
+                time.sleep((attempts-1)*5)
                 self.connect()
             except Exception as e:
                 self.logger.error("Failed to send on attempt %d. Retrying...", attempts)
