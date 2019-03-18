@@ -2,8 +2,7 @@ import unittest
 from metaroot.event.consumer import Consumer
 from metaroot.event.producer import Producer
 from metaroot.config import get_config
-from metaroot.common import Result
-
+from metaroot.api.result import Result
 
 sequence = 0
 
