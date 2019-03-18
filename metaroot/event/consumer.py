@@ -1,8 +1,9 @@
-import pika
+import pika.exceptions
 import yaml
 import sys
 import inspect
 import signal
+import time
 import metaroot.config
 import metaroot.utils
 
@@ -18,6 +19,8 @@ class Consumer:
         self._logger = None
         self._connection = None
         self._channel = None
+        self._config = None
+        self._exit_requested = False
 
     @staticmethod
     def get_error_response(status: int):
@@ -102,6 +105,7 @@ class Consumer:
         # Handle special case of the CLOSE_IMMEDIATELY message that shuts down the Consumer
         if message == "CLOSE_IMMEDIATELY":
             ch.basic_ack(delivery_tag=method.delivery_tag)
+            self._exit_requested = True
             self._channel.stop_consuming()
             return
 
@@ -123,6 +127,39 @@ class Consumer:
         except Exception:
             self._logger.info("connection.close() raised an exception")
 
+    def connect(self):
+        try:
+            # Pretty standard connection stuff (user, password, etc)
+            credentials = pika.PlainCredentials(self._config.get_mq_user(), self._config.get_mq_pass())
+            parameters = pika.ConnectionParameters(host=self._config.get_mq_host(),
+                                                   port=self._config.get_mq_port(),
+                                                   virtual_host='/',
+                                                   credentials=credentials,
+                                                   heartbeat=30)
+            self._connection = pika.BlockingConnection(parameters)
+            self._channel = self._connection.channel()
+
+            # Only servers declare queues (not the clients)
+            self._channel.queue_declare(self._config.get_mq_queue_name(),
+                                        durable=True)  # request that the queue be persisted to disk
+
+            # Only receive messages if idle
+            self._channel.basic_qos(prefetch_count=1)
+
+            # Attach the callback to handle messages
+            self._channel.basic_consume(self.consume_callback,
+                                        queue=self._config.get_mq_queue_name())
+
+            return True
+        except Exception as e:
+            return False
+
+    def start_consuming(self):
+        """
+        Start the blocking wait for messages
+        """
+        self._channel.start_consuming()
+
     def start(self, config_key: str):
         """
         Calls a method of an object
@@ -137,59 +174,52 @@ class Consumer:
         int
             Returns 1 on exit
         """
-        config = metaroot.config.get_config(config_key)
+        self._config = metaroot.config.get_config(config_key)
 
         # Setup our custom logging to use the class name processing the messages as its tag
-        self._logger = metaroot.utils.get_logger(config.get_mq_handler_class(),
-                                                 config.get_log_file(),
-                                                 config.get_mq_file_verbosity(),
-                                                 config.get_mq_screen_verbosity())
-
-        # Pretty standard connection stuff (user, password, etc)
-        credentials = pika.PlainCredentials(config.get_mq_user(), config.get_mq_pass())
-        parameters = pika.ConnectionParameters(host=config.get_mq_host(),
-                                               port=config.get_mq_port(),
-                                               virtual_host='/',
-                                               credentials=credentials,
-                                               heartbeat=30)
-        self._connection = pika.BlockingConnection(parameters)
-        self._channel = self._connection.channel()
-
-        # Consumers declare the channel on startup.
-        self._channel.queue_declare(config.get_mq_queue_name(),
-                                    durable=True)  # request that the queue be persisted to disk
-        self._logger.info("declared queue %s, Durable=True", config.get_mq_queue_name())
-
-        # Only receive messages if idle
-        self._channel.basic_qos(prefetch_count=1)
+        self._logger = metaroot.utils.get_logger(self.__class__.__name__,
+                                                 self._config.get_log_file(),
+                                                 self._config.get_mq_file_verbosity(),
+                                                 self._config.get_mq_screen_verbosity())
 
         # Instantiate an instance of the class specified in the config file that will process messages
-        self._handler = metaroot.utils.instantiate_object_from_class_path(config.get_mq_handler_class())
-        self._logger.info("instantiated handler %s", config.get_mq_handler_class())
-
-        # Attach the callback to handle messages
-        self._channel.basic_consume(self.consume_callback,
-                                    queue=config.get_mq_queue_name())
+        self._handler = metaroot.utils.instantiate_object_from_class_path(self._config.get_mq_handler_class())
+        self._logger.info("instantiated handler %s", self._config.get_mq_handler_class())
 
         # We want to exit gracefully if a SIGTERM is sent, so configure a handler
         signal.signal(signal.SIGTERM, self.shutdown)
 
-        # Consume messages, attempting to exit gracefully
-        try:
-            self._logger.info('starting consume loop for messages of type "%s"...', config.get_mq_queue_name())
-            self._channel.start_consuming()
-        except KeyboardInterrupt as e:
-            self._logger.warning("Interrupted by keyboard input.")
-        except IOError as e:
-            if e.errno == 9:
-                self._logger.warning("Bad file descriptor. This is expected if the process was sent a SIGTERM, but " +
-                                     "could otherwise be indicative of a network problem")
+        # Consume messages, attempting to recover from network dropout
+        self._logger.info('starting consume loop for messages of type "%s"...', self._config.get_mq_queue_name())
+        connect_attempts = 1
+        while connect_attempts < 30 and not self._exit_requested:
+            if not self.connect():
+                self._logger.info("Failed to connect on attempt %d. Will try again after sleeping %d seconds",
+                                  connect_attempts,
+                                  connect_attempts * 5)
+                time.sleep(connect_attempts * 5)
+                connect_attempts = connect_attempts + 1
             else:
-                self._logger.exception(e)
-        except Exception as e:
-            self._logger.exception(e)
-        self.shutdown(1, None)
+                self._logger.info("Connected to message host %s:%d after %d attempts",
+                                  self._config.get_mq_host(),
+                                  self._config.get_mq_port(),
+                                  connect_attempts)
+                connect_attempts = 1
 
+                try:
+                    self.start_consuming()
+                except KeyboardInterrupt as e:
+                    self._logger.warning("Interrupted by keyboard input.")
+                    break
+                except (pika.exceptions.ConnectionClosed, pika.exceptions.ChannelClosed) as e:
+                    self._logger.exception(e)
+                    self._logger.error("Will attempt to reconnect")
+                except Exception as e:
+                    self._logger.exception(e)
+                    self._logger.error("Will not attempt to reconnect")
+                    break
+
+        self.shutdown(0, None)
         return 1
 
 
