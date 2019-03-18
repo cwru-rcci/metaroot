@@ -31,6 +31,7 @@ class Config:
         self._data[ConfigParams.METAROOT_LOG_FILE.value] = "metaroot.log"
         self._data[ConfigParams.METAROOT_SCREEN_VERBOSITY.value] = "INFO"
         self._data[ConfigParams.METAROOT_FILE_VERBOSITY.value] = "INFO"
+        self._data[ConfigParams.METAROOT_ACTIVITY_STREAM.value] = "$NONE"
 
     def get(self, key):
         return self._data[key]
