@@ -1,5 +1,5 @@
 import unittest
-from metaroot.common import Result
+from metaroot.api.result import Result
 from metaroot.router import Router
 
 
@@ -7,49 +7,49 @@ class Handler1:
     def __init__(self):
         self.name = "handler1"
 
-    def add_group(self, group_atts: dict) -> Result:
+    def add_group(self, group_atts: dict):
         return Result(0, "add_group:"+self.name)
 
-    def get_group(self, name: str) -> Result:
+    def get_group(self, name: str):
         return Result(0, "get_group:"+self.name)
 
-    def get_members(self, name: str) -> Result:
+    def get_members(self, name: str):
         return Result(0, "get_members:"+self.name)
 
-    def update_group(self, group_atts: dict) -> Result:
+    def update_group(self, group_atts: dict):
         return Result(0, "update_group:"+self.name)
 
-    def delete_group(self, name: str) -> Result:
+    def delete_group(self, name: str):
         return Result(0, "delete_group:"+self.name)
 
-    def exists_group(self, name: str) -> Result:
+    def exists_group(self, name: str):
         return Result(0, "exists_group:"+self.name)
 
-    def add_user(self, user_atts: dict) -> Result:
+    def add_user(self, user_atts: dict):
         return Result(0, "add_user:"+self.name)
 
-    def update_user(self, user_atts: dict) -> Result:
+    def update_user(self, user_atts: dict):
         return Result(0, "update_user:"+self.name)
 
-    def get_user(self, name: str) -> Result:
+    def get_user(self, name: str):
         return Result(0, "get_user:"+self.name)
 
-    def delete_user(self, name: str) -> Result:
+    def delete_user(self, name: str):
         return Result(0, "delete_user:"+self.name)
 
-    def exists_user(self, name: str) -> Result:
+    def exists_user(self, name: str):
         return Result(0, "exists_user:"+self.name)
 
-    def set_user_default_group(self, user_name: str, group_name: str) -> Result:
+    def set_user_default_group(self, user_name: str, group_name: str):
         return Result(0, "set_user_default_group:"+self.name)
 
-    def associate_user_to_group(self, user_name: str, group_name: str) -> Result:
+    def associate_user_to_group(self, user_name: str, group_name: str):
         return Result(0, "associate_user_to_group:"+self.name)
 
-    def disassociate_user_from_group(self, user_name: str, group_name: str) -> Result:
+    def disassociate_user_from_group(self, user_name: str, group_name: str):
         return Result(0, "disassociate_user_from_group:"+self.name)
 
-    def disassociate_users_from_group(self, user_names: list, group_name: str) -> Result:
+    def disassociate_users_from_group(self, user_names: list, group_name: str):
         return Result(0, "disassociate_users_from_group:"+self.name)
 
 
@@ -57,54 +57,54 @@ class Handler2:
     def __init__(self):
         self.name = "handler2"
 
-    def add_group(self, group_atts: dict) -> Result:
+    def add_group(self, group_atts: dict):
         return Result(0, "add_group:" + self.name)
 
-    def get_group(self, name: str) -> Result:
+    def get_group(self, name: str):
         return Result(0, "get_group:" + self.name)
 
-    def get_members(self, name: str) -> Result:
+    def get_members(self, name: str):
         return Result(0, "get_members:" + self.name)
 
-    def update_group(self, group_atts: dict) -> Result:
+    def update_group(self, group_atts: dict):
         return Result(0, "update_group:" + self.name)
 
-    def delete_group(self, name: str) -> Result:
+    def delete_group(self, name: str):
         return Result(0, "delete_group:" + self.name)
 
-    def exists_group(self, name: str) -> Result:
+    def exists_group(self, name: str):
         return Result(0, "exists_group:" + self.name)
 
-    def add_user(self, user_atts: dict) -> Result:
+    def add_user(self, user_atts: dict):
         return Result(0, "add_user:" + self.name)
 
-    def update_user(self, user_atts: dict) -> Result:
+    def update_user(self, user_atts: dict):
         return Result(0, "update_user:" + self.name)
 
-    def get_user(self, name: str) -> Result:
+    def get_user(self, name: str):
         return Result(0, "get_user:" + self.name)
 
-    def delete_user(self, name: str) -> Result:
+    def delete_user(self, name: str):
         return Result(0, "delete_user:" + self.name)
 
-    def exists_user(self, name: str) -> Result:
+    def exists_user(self, name: str):
         return Result(0, "exists_user:" + self.name)
 
-    def set_user_default_group(self, user_name: str, group_name: str) -> Result:
+    def set_user_default_group(self, user_name: str, group_name: str):
         return Result(0, "set_user_default_group:" + self.name)
 
-    def associate_user_to_group(self, user_name: str, group_name: str) -> Result:
+    def associate_user_to_group(self, user_name: str, group_name: str):
         return Result(0, "associate_user_to_group:" + self.name)
 
-    def disassociate_user_from_group(self, user_name: str, group_name: str) -> Result:
+    def disassociate_user_from_group(self, user_name: str, group_name: str):
         return Result(0, "disassociate_user_from_group:" + self.name)
 
-    def disassociate_users_from_group(self, user_names: list, group_name: str) -> Result:
+    def disassociate_users_from_group(self, user_names: list, group_name: str):
         return Result(0, "disassociate_users_from_group:" + self.name)
 
 
 class RouterTest(unittest.TestCase):
-    def test_add_group(self) -> Result:
+    def test_add_group(self):
         router = Router()
         result = router.add_group({})
         self.assertEqual(0, result.status)
@@ -113,7 +113,7 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("add_group:handler2", result.response["Handler2"].response)
 
-    def test_get_group(self) -> Result:
+    def test_get_group(self):
         router = Router()
         result = router.get_group("")
         self.assertEqual(0, result.status)
@@ -122,7 +122,7 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("get_group:handler2", result.response["Handler2"].response)
 
-    def test_get_members(self) -> Result:
+    def test_get_members(self):
         router = Router()
         result = router.get_members("")
         self.assertEqual(0, result.status)
@@ -131,7 +131,7 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("get_members:handler2", result.response["Handler2"].response)
 
-    def test_update_group(self) -> Result:
+    def test_update_group(self):
         router = Router()
         result = router.update_group({})
         self.assertEqual(0, result.status)
@@ -140,7 +140,7 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("update_group:handler2", result.response["Handler2"].response)
 
-    def test_delete_group(self) -> Result:
+    def test_delete_group(self):
         router = Router()
         result = router.delete_group("")
         self.assertEqual(0, result.status)
@@ -149,7 +149,7 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("delete_group:handler2", result.response["Handler2"].response)
 
-    def test_exists_group(self) -> Result:
+    def test_exists_group(self):
         router = Router()
         result = router.exists_group("")
         self.assertEqual(0, result.status)
@@ -158,7 +158,7 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("exists_group:handler2", result.response["Handler2"].response)
 
-    def test_add_user(self) -> Result:
+    def test_add_user(self):
         router = Router()
         result = router.add_user({})
         self.assertEqual(0, result.status)
@@ -167,16 +167,16 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("add_user:handler2", result.response["Handler2"].response)
 
-    def test_update_user(self) -> Result:
+    def test_update_user(self):
         router = Router()
-        result = router.update_user("")
+        result = router.update_user({})
         self.assertEqual(0, result.status)
         self.assertEqual(0, result.response["Handler1"].status)
         self.assertEqual("update_user:handler1", result.response["Handler1"].response)
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("update_user:handler2", result.response["Handler2"].response)
 
-    def test_get_user(self) -> Result:
+    def test_get_user(self):
         router = Router()
         result = router.get_user("")
         self.assertEqual(0, result.status)
@@ -185,7 +185,7 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("get_user:handler2", result.response["Handler2"].response)
 
-    def test_delete_user(self) -> Result:
+    def test_delete_user(self):
         router = Router()
         result = router.delete_user("")
         self.assertEqual(0, result.status)
@@ -194,7 +194,7 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("delete_user:handler2", result.response["Handler2"].response)
 
-    def test_exists_user(self) -> Result:
+    def test_exists_user(self):
         router = Router()
         result = router.exists_user("")
         self.assertEqual(0, result.status)
@@ -203,7 +203,7 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("exists_user:handler2", result.response["Handler2"].response)
 
-    def test_set_user_default_group(self) -> Result:
+    def test_set_user_default_group(self):
         router = Router()
         result = router.set_user_default_group("", "")
         self.assertEqual(0, result.status)
@@ -212,7 +212,7 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("set_user_default_group:handler2", result.response["Handler2"].response)
 
-    def test_associate_user_to_group(self) -> Result:
+    def test_associate_user_to_group(self):
         router = Router()
         result = router.associate_user_to_group("", "")
         self.assertEqual(0, result.status)
@@ -221,7 +221,7 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("associate_user_to_group:handler2", result.response["Handler2"].response)
 
-    def test_disassociate_user_from_group(self) -> Result:
+    def test_disassociate_user_from_group(self):
         router = Router()
         result = router.disassociate_user_from_group("", "")
         self.assertEqual(0, result.status)
@@ -230,7 +230,7 @@ class RouterTest(unittest.TestCase):
         self.assertEqual(0, result.response["Handler2"].status)
         self.assertEqual("disassociate_user_from_group:handler2", result.response["Handler2"].response)
 
-    def test_disassociate_users_from_group(self) -> Result:
+    def test_disassociate_users_from_group(self):
         router = Router()
         result = router.disassociate_users_from_group([], "")
         self.assertEqual(0, result.status)
