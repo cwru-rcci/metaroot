@@ -195,7 +195,7 @@ def create_rpc_wrapper(clazz):
     # Output headers
     dt = datetime.datetime.now()
     print("from metaroot.rpc.client import RPCClient")
-    print("from metaroot.config import locate_config")
+    print("from metaroot.config import get_config")
     print("from metaroot.common import Result")
     print("")
     print("")
@@ -239,7 +239,6 @@ def create_rpc_wrapper(clazz):
 
         print(") -> Result:")
         print("        request = {{'action': '{0}',".format(method_name))
-        print("                   'class': '{0}',".format(clazz))
         for argument_name in arguments:
             print("                   '{0}': {1},".format(argument_name, argument_name))
         print("                   }")
@@ -268,7 +267,7 @@ def create_producer_wrapper(clazz):
     # Output headers
     dt = datetime.datetime.now()
     print("from metaroot.event.producer import Producer")
-    print("from metaroot.config import locate_config")
+    print("from metaroot.config import get_config")
     print("from metaroot.common import Result")
     print("")
     print("")
