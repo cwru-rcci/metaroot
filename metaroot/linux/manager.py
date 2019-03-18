@@ -1,6 +1,6 @@
 import subprocess
 import metaroot.utils
-from metaroot.common import Result
+from metaroot.api.result import Result
 
 
 class LinuxManager:
