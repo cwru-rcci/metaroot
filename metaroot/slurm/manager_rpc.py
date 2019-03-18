@@ -1,12 +1,12 @@
 from metaroot.rpc.client import RPCClient
 from metaroot.config import get_config
-from metaroot.common import Result
+from metaroot.api.result import Result
 
 
 class SlurmManager(RPCClient):
     """
     RPC wrapper for metaroot.slurm.manager.SlurmManager
-    Auto-generated 2019-03-14T15:22:48.248287
+    Auto-generated 2019-03-18T10:09:36.029748
     """
     def __init__(self):
         super().__init__(get_config(self.__class__.__name__))
@@ -20,7 +20,6 @@ class SlurmManager(RPCClient):
     """
     def add_group(self, group_atts) -> Result:
         request = {'action': 'add_group',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'group_atts': group_atts,
                    }
         return self.send(request)
@@ -34,7 +33,6 @@ class SlurmManager(RPCClient):
     """
     def add_user(self, user_atts) -> Result:
         request = {'action': 'add_user',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'user_atts': user_atts,
                    }
         return self.send(request)
@@ -48,7 +46,6 @@ class SlurmManager(RPCClient):
     """
     def associate_user_to_group(self, user_name, group_name) -> Result:
         request = {'action': 'associate_user_to_group',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'user_name': user_name,
                    'group_name': group_name,
                    }
@@ -63,7 +60,6 @@ class SlurmManager(RPCClient):
     """
     def delete_group(self, name) -> Result:
         request = {'action': 'delete_group',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'name': name,
                    }
         return self.send(request)
@@ -77,7 +73,6 @@ class SlurmManager(RPCClient):
     """
     def delete_user(self, name) -> Result:
         request = {'action': 'delete_user',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'name': name,
                    }
         return self.send(request)
@@ -91,7 +86,6 @@ class SlurmManager(RPCClient):
     """
     def disassociate_user_from_group(self, user_name, group_name) -> Result:
         request = {'action': 'disassociate_user_from_group',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'user_name': user_name,
                    'group_name': group_name,
                    }
@@ -106,7 +100,6 @@ class SlurmManager(RPCClient):
     """
     def disassociate_users_from_group(self, user_names, group_name) -> Result:
         request = {'action': 'disassociate_users_from_group',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'user_names': user_names,
                    'group_name': group_name,
                    }
@@ -121,7 +114,6 @@ class SlurmManager(RPCClient):
     """
     def exists_group(self, name) -> Result:
         request = {'action': 'exists_group',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'name': name,
                    }
         return self.send(request)
@@ -135,7 +127,6 @@ class SlurmManager(RPCClient):
     """
     def exists_user(self, name) -> Result:
         request = {'action': 'exists_user',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'name': name,
                    }
         return self.send(request)
@@ -149,7 +140,6 @@ class SlurmManager(RPCClient):
     """
     def get_group(self, name) -> Result:
         request = {'action': 'get_group',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'name': name,
                    }
         return self.send(request)
@@ -163,7 +153,6 @@ class SlurmManager(RPCClient):
     """
     def get_members(self, name) -> Result:
         request = {'action': 'get_members',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'name': name,
                    }
         return self.send(request)
@@ -177,7 +166,6 @@ class SlurmManager(RPCClient):
     """
     def get_user(self, name) -> Result:
         request = {'action': 'get_user',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'name': name,
                    }
         return self.send(request)
@@ -191,7 +179,6 @@ class SlurmManager(RPCClient):
     """
     def set_user_default_group(self, user_name, group_name) -> Result:
         request = {'action': 'set_user_default_group',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'user_name': user_name,
                    'group_name': group_name,
                    }
@@ -206,7 +193,6 @@ class SlurmManager(RPCClient):
     """
     def update_group(self, group_atts) -> Result:
         request = {'action': 'update_group',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'group_atts': group_atts,
                    }
         return self.send(request)
@@ -220,7 +206,7 @@ class SlurmManager(RPCClient):
     """
     def update_user(self, user_atts) -> Result:
         request = {'action': 'update_user',
-                   'class': 'metaroot.slurm.manager.SlurmManager',
                    'user_atts': user_atts,
                    }
         return self.send(request)
+
