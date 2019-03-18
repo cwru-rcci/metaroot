@@ -1,24 +1,21 @@
-from metaroot.rpc.client import RPCClient
-from metaroot.event.producer import Producer
-from metaroot.config import get_config
-from metaroot.common import Result
+from metaroot.api.result import Result
 
 
-class API:
+class ClientAPI:
     """
-    A collection of methods for performing administrative tasks in backend infrastructure
+    Client for performing administrative tasks in metaroot backend infrastructure.
     """
 
     def __init__(self, client):
         """
-        Initialize the API to use either a Producer (Events) or RPCClient (RPC) for communication
+        Initialize the API to use a Producer (Events) or RPCClient (RPC) for communication
 
         Parameters
         ----------
         client
             An instance of an object with a "send" method
         """
-        self._client = client
+        self.client = client
 
     def __del__(self):
         """
@@ -42,13 +39,16 @@ class API:
             Depending on the underlying client this will be the status of message delivery (EventAPI) or the status
             of the backend operations (MethodAPI)
         """
-        return self._client.send(request)
+        return self.client.send(request)
 
     def close(self):
         """
         Close the API instance
         """
-        self._client.close()
+        try:
+            self.client.close()
+        except Exception as e:
+            pass
 
     def add_group(self, group_atts) -> Result:
         """
@@ -249,124 +249,5 @@ class API:
     def update_user(self, user_atts) -> Result:
         request = {'action': 'update_user',
                    'user_atts': user_atts,
-                   }
-        return self._call(request)
-
-
-class EventAPI(API):
-    """
-    An event based API where requests are dispatched, and only the delivery status to the message queue is returned.
-    This API is intended for use when an operation is long running and needs to be initiated from an application that
-    requires a short time from call ro return. This API style precludes use of methods the fetch/get information from
-    the backend.
-    """
-    def __init__(self):
-        super().__init__(Producer(get_config(self.__class__.__name__)))
-
-
-class MethodAPI(API):
-    """
-    An RPC based API where requests are sent, and the result of the background operation is returned. This API is
-    intended for use when the calling application can wait sufficiently long for a response. Methods to fetch/get
-    information from the backend are available in this API (versus the EventAPI)
-    """
-
-    def __init__(self):
-        super().__init__(RPCClient(get_config(self.__class__.__name__)))
-
-    def exists_group(self, name) -> Result:
-        """
-        Test if a group exists
-
-        Parameters
-        ----------
-        name: str
-            Group name
-
-        Returns
-        -------
-        Result
-            Depending on the underlying client this will be the status of message delivery (EventAPI) or the status
-            of the backend operations (MethodAPI)
-        """
-        request = {'action': 'exists_group',
-                   'name': name,
-                   }
-        return self._call(request)
-
-    def exists_user(self, name) -> Result:
-        """
-        Test if a user exists
-
-        Parameters
-        ----------
-        name: str
-            User name
-
-        Returns
-        -------
-        Result
-            Depending on the underlying client this will be the status of message delivery (EventAPI) or the status
-            of the backend operations (MethodAPI)
-        """
-        request = {'action': 'exists_user',
-                   'name': name,
-                   }
-        return self._call(request)
-
-    def get_group(self, name) -> Result:
-        """
-        Retrieve all information about the group from the backend
-
-        Parameters
-        ----------
-        name: str
-            Group name
-
-        Returns
-        -------
-        Result
-            The group data
-        """
-        request = {'action': 'get_group',
-                   'name': name,
-                   }
-        return self._call(request)
-
-    def get_members(self, name) -> Result:
-        """
-        Retrieve a list of users associated with a group
-
-        Parameters
-        ----------
-        name: str
-            Group name
-
-        Returns
-        -------
-        Result
-            The list of user names associate with the group
-        """
-        request = {'action': 'get_members',
-                   'name': name,
-                   }
-        return self._call(request)
-
-    def get_user(self, name) -> Result:
-        """
-        Retrieve all information about the user from the backend
-
-        Parameters
-        ----------
-        name: str
-            User name
-
-        Returns
-        -------
-        Result
-            The user data
-        """
-        request = {'action': 'get_user',
-                   'name': name,
                    }
         return self._call(request)
