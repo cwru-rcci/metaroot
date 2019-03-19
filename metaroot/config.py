@@ -40,10 +40,8 @@ class Config:
         return key in self._data
 
     def populate(self, atts: dict):
-        valid_properties = set(item.value for item in ConfigParams)
         for prop in atts:
-            if prop in valid_properties:
-                self._data[prop] = atts[prop]
+            self._data[prop] = atts[prop]
 
     def get_mq_user(self):
         return self._data[ConfigParams.METAROOT_MQUSER.value]
