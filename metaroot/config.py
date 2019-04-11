@@ -1,6 +1,7 @@
 import yaml
 import os
 from enum import Enum
+from metaroot.utils import get_logger
 
 
 class ConfigParams(Enum):
@@ -19,6 +20,9 @@ class ConfigParams(Enum):
     METAROOT_HOOKS = 'METAROOT_HOOKS'
     METAROOT_ACTIVITY_STREAM = 'METAROOT_ACTIVITY_STREAM'
     METAROOT_DATABASE = 'METAROOT_DATABASE'
+
+
+config_logger = None
 
 
 class Config:
@@ -42,6 +46,9 @@ class Config:
     def populate(self, atts: dict):
         for prop in atts:
             self._data[prop] = atts[prop]
+
+    def data(self):
+        return self._data
 
     def get_mq_user(self):
         return self._data[ConfigParams.METAROOT_MQUSER.value]
@@ -84,6 +91,11 @@ class Config:
 
     def get_activity_stream_db(self):
         return self._data[ConfigParams.METAROOT_DATABASE.value]
+
+
+def debug_config(config: Config):
+    for key in config.data():
+        config_logger.debug("%s = %s", key, config.get(key))
 
 
 def get_config(key: str):
@@ -134,7 +146,7 @@ def get_config(key: str):
         config.populate(auto["METAROOT_GLOBAL"])
         config.populate(auto[key])
         ready = True
-        print("{0} using auto-configuration from global".format(key))
+        config_logger.info("%s using auto-configuration from global", key)
     except Exception:
         pass
 
@@ -149,13 +161,14 @@ def get_config(key: str):
             config.populate(getattr(settings, "METAROOT_GLOBAL"))
             config.populate(getattr(settings, key))
             ready = True
-            print("{0} using configuration from DJango settings".format(key))
+            config_logger.info("%s using auto-configuration from DJango settings", key)
         except Exception:
             pass
 
     if ready:
         return config
     else:
+        config_logger.error("Could not locate configuration for %s in any standard locations", key)
         raise Exception("Could not locate configuration in any standard locations")
 
 
@@ -173,26 +186,36 @@ def load_file_based_config():
     path = ""
     ready = False
     attempts = 0
+    global config_logger
 
     while not ready and attempts < 4:
-        try:
-            # Test config takes precedence over production config
-            config_file="metaroot.yaml"
-            if os.path.exists(path+"metaroot-test.yaml"):
-                print("Using configuration, metaroot-test.yaml. You should rename or remove this file in production")
-                config_file = "metaroot-test.yaml"
+        # Test config takes precedence over production config
+        if os.path.exists(path+"metaroot-test.yaml"):
+            print("Using configuration, metaroot-test.yaml. You should rename or remove this file in production")
+            config_file = "metaroot-test.yaml"
+        elif os.path.exists(path+"metaroot.yaml"):
+            config_file = "metaroot.yaml"
+        elif os.path.exists(path + "../"):
+            path = path + "../"
+            attempts = attempts + 1
+            continue
+        else:
+            break
 
-            stream = open(path+config_file, 'r')
-            config = yaml.safe_load(stream)
-            stream.close()
-            print("Loaded first configuration file found at {0}\n".format(path+config_file))
-            return config
-        except Exception:
-            if os.path.exists(path + "../"):
-                path = path + "../"
-                attempts = attempts + 1
-            else:
-                break
+        stream = open(path+config_file, 'r')
+        config = yaml.safe_load(stream)
+        stream.close()
+
+        wrapper = Config()
+        wrapper.populate(config["METAROOT_GLOBAL"])
+        config_logger = get_logger("CONFIG",
+                                   wrapper.get_log_file(),
+                                   wrapper.get_mq_file_verbosity(),
+                                   wrapper.get_mq_screen_verbosity())
+
+        config_logger.info("Loaded first configuration file found at %s", path+config_file)
+        return config
+
     return None
 
 
