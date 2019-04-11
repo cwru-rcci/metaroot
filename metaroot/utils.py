@@ -2,9 +2,7 @@ import sys
 import logging
 import inspect
 import datetime
-import pika
 from importlib import import_module
-import metaroot.config
 
 loggers = {}
 
@@ -80,77 +78,6 @@ def get_logger(name: str, file_path: str, file_level="INFO", screen_level="INFO"
         return logger
 
 
-def delete_queue(queue_name: str):
-    """
-    Deletes a queue from the message queue server
-
-    Parameters
-    ----------
-    queue_name: str
-        The name of the queue to delete
-
-    Returns
-    ----------
-    int
-        Returns 0 on success
-
-    Raises
-    ----------
-    Exception
-        If the underlying operations raise an exception
-    """
-    config = metaroot.config.get_global_config()
-
-    # Pretty standard connection stuff (user, password, etc)
-    credentials = pika.PlainCredentials(config.get_mq_user(), config.get_mq_pass())
-    parameters = pika.ConnectionParameters(host=config.get_mq_host(),
-                                           port=config.get_mq_port(),
-                                           virtual_host='/',
-                                           credentials=credentials,
-                                           heartbeat=30)
-    connection = pika.BlockingConnection(parameters)
-    channel = connection.channel()
-    channel.queue_delete(queue=queue_name)
-    connection.close()
-    return 0
-
-
-def create_queue(queue_name: str):
-    """
-    Creates a durable queue on the message queue server
-
-    Parameters
-    ----------
-    queue_name: str
-        The name of the queue to delete
-
-    Returns
-    ----------
-    int
-        Returns 0 on success
-
-    Raises
-    ----------
-    Exception
-        If the underlying operations raise an exception
-    """
-    config = metaroot.config.get_global_config()
-
-    # Pretty standard connection stuff
-    credentials = pika.PlainCredentials(config.get_mq_user(), config.get_mq_pass())
-    parameters = pika.ConnectionParameters(host=config.get_mq_host(),
-                                           port=config.get_mq_port(),
-                                           virtual_host='/',
-                                           credentials=credentials,
-                                           heartbeat=30)
-    connection = pika.BlockingConnection(parameters)
-    channel = connection.channel()
-    channel.queue_declare(queue_name,
-                          durable=True)  # request that the queue be persisted to disk
-    connection.close()
-    return 0
-
-
 def instantiate_object_from_class_path(path: str):
     """
     Instantiates an instance of a class specified as a string
@@ -196,7 +123,7 @@ def create_rpc_wrapper(clazz):
     dt = datetime.datetime.now()
     print("from metaroot.rpc.client import RPCClient")
     print("from metaroot.config import get_config")
-    print("from metaroot.common import Result")
+    print("from metaroot.api.result import Result")
     print("")
     print("")
     print("class {0}(RPCClient):".format(class_name))
@@ -268,7 +195,7 @@ def create_producer_wrapper(clazz):
     dt = datetime.datetime.now()
     print("from metaroot.event.producer import Producer")
     print("from metaroot.config import get_config")
-    print("from metaroot.common import Result")
+    print("from metaroot.api.result import Result")
     print("")
     print("")
     print("class {0}(Producer):".format(class_name))
