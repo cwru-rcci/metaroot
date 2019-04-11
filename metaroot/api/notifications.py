@@ -12,9 +12,14 @@ logger = get_logger(__name__,
 
 
 class DefaultEmailAddressResolver:
+    """
+    Performs a very basic validation that the argument user name looks like a valid email address using a regular
+    expression. If y = [one or more chars that cannot contain @] the regex tests for strings that match y@y.y
+    """
     @staticmethod
     def resolve_to_email_address(user_name: str) -> str:
         # The user name looks like it is already an email address
+        # Regex from https://stackoverflow.com/a/8022584/3357118
         if re.fullmatch(r"[^@]+@[^@]+\.[^@]+", user_name):
             return user_name
         else:
@@ -22,6 +27,27 @@ class DefaultEmailAddressResolver:
 
 
 def send_email(recipient_user_name: str, subject: str, body: str):
+    """
+    Method to send an email notification with an HTML body
+
+    Parameters
+    ----------
+    recipient_user_name: str
+        The user name that should receive the notification. This is resolved to an email address using either the
+        builtin default resolver, or with a custom resolver specified in the SMTP configuration
+    subject: str
+        Subject of the email
+    body: str
+        Body of the email
+
+    Returns
+    -------
+    True
+        If the email was sent
+    False
+        If the email could not be sent
+
+    """
     try:
         config = get_config("SMTP")
         if config.has("METAROOT_SMTP_SERVER") and config.has("METAROOT_SMTP_USER") and \
