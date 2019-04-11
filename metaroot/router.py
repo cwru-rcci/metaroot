@@ -1,6 +1,7 @@
 from metaroot.config import get_config
 from metaroot.utils import instantiate_object_from_class_path, get_logger
 from metaroot.api.result import Result
+from metaroot.api.reactions import DefaultReactions
 
 
 class NullActivityStream:
@@ -37,8 +38,18 @@ class Router:
         hooks = config.get_hooks()
         self._managers = []
         for hook in hooks:
-            self._managers.append(instantiate_object_from_class_path(hook))
-            self._logger.info("Loaded manager for %s", hook)
+            try:
+                self._managers.append(instantiate_object_from_class_path(hook))
+                self._logger.info("Loaded manager for %s", hook)
+            except Exception as e:
+                self._logger.exception(e)
+                self._logger.error("Exception while instantiating hook %s", hook)
+
+        self._reactions = None
+        if config.has("METAROOT_REACTION_HANDLER"):
+            self._reactions = instantiate_object_from_class_path(config.get("METAROOT_REACTION_HANDLER"))
+        else:
+            self._reactions = DefaultReactions()
 
     def _safe_call(self, method_name: str, args: list) -> Result:
         """
@@ -78,6 +89,10 @@ class Router:
             self.__activity_stream.record(method_name + ":" + manager.__class__.__name__,
                                           args,
                                           result)
+
+            # Allow reactions to occur in response to result of last action
+            self._reactions.occur_in_response_to(manager.__class__.__name__, method_name, args, result)
+
         return Result(status, all_results)
 
     def add_group(self, group_atts: dict) -> Result:
