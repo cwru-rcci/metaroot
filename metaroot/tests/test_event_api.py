@@ -1,7 +1,7 @@
 import unittest
 from metaroot.api.event_client import EventClient
 from metaroot.api.result import Result
-import metaroot.daemon
+from metaroot.event.consumer import Consumer
 
 sequence = 0
 
@@ -24,7 +24,8 @@ class AEventAPITest(unittest.TestCase):
 
 class BEventDaemonTest(unittest.TestCase):
     def test_daemon_add_group(self):
-        metaroot.daemon.run("DAEMON")
+        consumer = Consumer()
+        consumer.start("DAEMON")
 
 
 if __name__ == '__main__':
