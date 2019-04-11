@@ -2,6 +2,7 @@
 import pika
 import pika.exceptions
 import yaml
+import time
 from metaroot.api.result import Result
 from metaroot.config import Config
 from metaroot.utils import get_logger
@@ -84,8 +85,10 @@ class Producer:
         Close pika connection
         """
         try:
-            self.connection.close()
+            if not self.connection.is_closed:
+                self.connection.close()
         except Exception as e:
+            self._logger.exception(e)
             self._logger.warning("closing connection raised an exception")
 
     def send(self, obj: object) -> Result:
@@ -119,19 +122,20 @@ class Producer:
         attempts = 1
         while not_sent and attempts < 10:
             try:
-                delivered = self.channel.basic_publish(exchange='',
-                                                       routing_key=self.queue,
-                                                       body=message,
-                                                       properties=pika.BasicProperties(
-                                                           delivery_mode=2,
-                                                           # Indicates message should be persisted on disk
-                                                       ))
-                not_sent = not delivered
-            except pika.exceptions.ConnectionClosed as e:
-                self._logger.error("Failed to send on attempt %d because connection closed. Reconnecting...", attempts)
-                self.connect()
+                self.channel.basic_publish(exchange='',
+                                           routing_key=self.queue,
+                                           body=message,
+                                           properties=pika.BasicProperties(
+                                               delivery_mode=2,
+                                               # Indicates message should be persisted on disk
+                                           ),
+                                           mandatory=True)
+                not_sent = False
             except Exception as e:
-                self._logger.error("Failed to send on attempt %d. Retrying...", attempts)
+                time.sleep((attempts - 1) * 5)
+                if self.connection.is_closed:
+                    self._logger.error("Failed to send on attempt %d because connection closed. Reconnecting...", attempts)
+                    self.connect()
 
             attempts = attempts + 1
 

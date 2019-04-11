@@ -147,8 +147,8 @@ class Consumer:
             self._channel.basic_qos(prefetch_count=1)
 
             # Attach the callback to handle messages
-            self._channel.basic_consume(self.consume_callback,
-                                        queue=self._config.get_mq_queue_name())
+            self._channel.basic_consume(queue=self._config.get_mq_queue_name(),
+                                        on_message_callback=self.consume_callback)
 
             return True
         except Exception as e:
