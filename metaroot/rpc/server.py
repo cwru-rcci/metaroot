@@ -182,11 +182,12 @@ class RPCServer:
             self._channel.basic_qos(prefetch_count=1)
 
             # Attach the callback to handle messages
-            self._channel.basic_consume(self.consume_callback,
-                                        queue=self._config.get_mq_queue_name())
+            self._channel.basic_consume(queue=self._config.get_mq_queue_name(),
+                                        on_message_callback=self.consume_callback)
 
             return True
         except Exception as e:
+            self._logger.exception(e)
             return False
 
     def start_consuming(self):
@@ -210,6 +211,7 @@ class RPCServer:
             Returns 1 on exit
         """
         self._config = metaroot.config.get_config(config_key)
+        metaroot.config.debug_config(self._config)
 
         # Setup our custom logging to use the class name processing the messages as its tag
         self._logger = metaroot.utils.get_logger(self.__class__.__name__,

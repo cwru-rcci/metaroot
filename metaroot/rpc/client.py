@@ -83,11 +83,13 @@ class RPCClient:
             self.channel = self.connection.channel()
 
             # Declare a delete-on-exit queue for this client to receive RPC callback message
-            qd_result = self.channel.queue_declare(exclusive=True)
+            qd_result = self.channel.queue_declare("", exclusive=True)
             self.callback_queue = qd_result.method.queue
 
             # Specify the function to process the RPC callback responses
-            self.channel.basic_consume(self.on_response, no_ack=True, queue=self.callback_queue)
+            self.channel.basic_consume(queue=self.callback_queue,
+                                       on_message_callback=self.on_response,
+                                       auto_ack=True)
 
             # Set properties to track call/response to
             self.corr_id = None
@@ -131,7 +133,8 @@ class RPCClient:
         Shutdown the RPC Client
         """
         try:
-            self.connection.close()
+            if not self.connection.is_closed:
+                self.connection.close()
         except Exception as e:
             self.logger.warn("closing connection raised an exception")
 
@@ -173,12 +176,11 @@ class RPCClient:
                                                reply_to=self.callback_queue,
                                                correlation_id=self.corr_id))
                 not_sent = False
-            except pika.exceptions.ConnectionClosed as e:
+            except Exception as e:
                 self.logger.info("Failed to send on attempt %d because connection closed. Reconnecting...", attempts)
                 time.sleep((attempts-1)*5)
-                self.connect()
-            except Exception as e:
-                self.logger.error("Failed to send on attempt %d. Retrying...", attempts)
+                if self.connection.is_closed:
+                    self.connect()
 
             attempts = attempts + 1
         if not_sent:
