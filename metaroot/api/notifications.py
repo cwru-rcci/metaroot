@@ -26,26 +26,28 @@ def send_email(recipient_user_name: str, subject: str, body: str):
         config = get_config("SMTP")
         if config.has("METAROOT_SMTP_SERVER") and config.has("METAROOT_SMTP_USER") and \
            config.has("METAROOT_SMTP_PASSWORD") and config.has("METAROOT_SMTP_FROM"):
-            msg = email.message.Message()
-            msg['Subject'] = subject
-            msg['From'] = config.get("METAROOT_SMTP_FROM")
-
             # Resolve/validate the recipient email adress
             resolver = DefaultEmailAddressResolver()
             if config.has("METAROOT_SMTP_ADDRESS_RESOLVER"):
                 resolver = instantiate_object_from_class_path(config.get("METAROOT_SMTP_ADDRESS_RESOLVER"))
-            msg['To'] = resolver.resolve_to_email_address(recipient_user_name)
 
+            # # # #
+            # The following is based heavily on https://stackoverflow.com/a/32129736/3357118
+            msg = email.message.Message()
+            msg['Subject'] = subject
+            msg['From'] = config.get("METAROOT_SMTP_FROM")
+            msg['To'] = resolver.resolve_to_email_address(recipient_user_name)
             msg.add_header('Content-Type', 'text/html')
             msg.set_payload(body)
 
-            # Send the message via local SMTP server.
             s = smtplib.SMTP(config.get("METAROOT_SMTP_SERVER"))
             s.starttls()
             s.login(config.get("METAROOT_SMTP_USER"),
                     config.get("METAROOT_SMTP_PASSWORD"))
             s.sendmail(msg['From'], [msg['To']], msg.as_string())
             s.quit()
+            # # # # # #
+
             return True
         else:
             logger.warning("SMTP settings are missing on incomplete. Message \"%s\" to %s could not be sent",
