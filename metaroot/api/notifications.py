@@ -18,7 +18,7 @@ class DefaultEmailAddressResolver:
     """
     @staticmethod
     def resolve_to_email_address(user_name: str) -> str:
-        # The user name looks like it is already an email address
+        # The user name looks like it is already an email address (e.g., ?@?.?)
         # Regex from https://stackoverflow.com/a/8022584/3357118
         if re.fullmatch(r"[^@]+@[^@]+\.[^@]+", user_name):
             return user_name
@@ -50,8 +50,7 @@ def send_email(recipient_user_name: str, subject: str, body: str):
     """
     try:
         config = get_config("SMTP")
-        if config.has("METAROOT_SMTP_SERVER") and config.has("METAROOT_SMTP_USER") and \
-           config.has("METAROOT_SMTP_PASSWORD") and config.has("METAROOT_SMTP_FROM"):
+        if config.has("METAROOT_SMTP_SERVER") and config.has("METAROOT_SMTP_FROM"):
             # Resolve/validate the recipient email adress
             resolver = DefaultEmailAddressResolver()
             if config.has("METAROOT_SMTP_ADDRESS_RESOLVER"):
@@ -67,9 +66,21 @@ def send_email(recipient_user_name: str, subject: str, body: str):
             msg.set_payload(body)
 
             s = smtplib.SMTP(config.get("METAROOT_SMTP_SERVER"))
-            s.starttls()
-            s.login(config.get("METAROOT_SMTP_USER"),
-                    config.get("METAROOT_SMTP_PASSWORD"))
+
+            # Evaluate TLS configuration and start TLS is requested
+            if config.has("METAROOT_START_TLS") and config.get("METAROOT_START_TLS"):
+                s.starttls()
+            else:
+                logger.warn("The value of METAROOT_START_TLS is missing or did not evaluate to True, so not using TLS")
+
+            # If a username and password were specified, authenticte to the SMPT server
+            if config.has("METAROOT_SMTP_USER") and config.has("METAROOT_SMTP_PASSWORD"):
+                logger.info("Authenticating to the SMPT server")
+                s.login(config.get("METAROOT_SMTP_USER"),
+                        config.get("METAROOT_SMTP_PASSWORD"))
+            else:
+                logger.info("Not authenticating to the SMTP server")
+
             s.sendmail(msg['From'], [msg['To']], msg.as_string())
             s.quit()
             # # # # # #
