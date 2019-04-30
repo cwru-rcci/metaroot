@@ -68,7 +68,7 @@ class RPCServer:
         try:
             method = getattr(obj, message['action'])
         except AttributeError:
-            self._logger.error("The method %q is not defined on the argument object %s",
+            self._logger.error("The method %s is not defined on the argument object %s",
                                message['action'], type(obj).__name__)
             return self.get_error_response(451)
 
