@@ -189,7 +189,10 @@ class RPCClient:
 
         # Wait for response
         while self.response is None:
-            self.connection.process_data_events()
+            self.logger.debug("Waiting for callback response to %s...", message)
+            # Process events in
+            self.connection.process_data_events(time_limit=5)
+
         self.corr_id = None
 
         # Decode the response dict as YAML
