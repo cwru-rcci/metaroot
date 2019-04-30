@@ -51,7 +51,7 @@ class Router:
         else:
             self._reactions = DefaultReactions()
 
-    def _safe_call(self, method_name: str, args: list) -> Result:
+    def _safe_call(self, method_name: str, args: list, target_managers="any") -> Result:
         """
         Iterates over the list of Managers, calling manager methods that implement the API request and returning the
         individual and overall result.
@@ -62,40 +62,46 @@ class Router:
             The name of the method that should be called on each Manager
         args: list
             An ordered list of arguments that match the method signature
+        target_managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         -------
         Result
             Result.status is the overall status: 0 for success, >0 for error
             Result.response is a dictionary with keys that are the class names of each Manager that implements the
-            requested method and the value of each key is the specific Result returned by the call to that Mangers's
+            requested method and the value of each key is the specific Result returned by the call to that Manger
             class method
         """
         status = 0
         all_results = {}
 
         for manager in self._managers:
-            # Find the method on the manager (skip if not defined)
-            try:
-                method = getattr(manager, method_name)
-            except AttributeError as e:
-                self._logger.debug("Method %s is not defined for manager/hook %s",
-                                   method_name, manager.__class__.__name__)
-                continue
+            # Filter which mangers to target (by default all will be targeted)
+            if target_managers == "any" or manager.__class__.__name__ in target_managers:
 
-            result = method(*args)
-            status = status + result.status
-            all_results[manager.__class__.__name__] = result
-            self.__activity_stream.record(method_name + ":" + manager.__class__.__name__,
-                                          args,
-                                          result)
+                # Find the method on the manager (skip if not defined)
+                try:
+                    method = getattr(manager, method_name)
+                except AttributeError as e:
+                    self._logger.debug("Method %s is not defined for manager/hook %s",
+                                       method_name, manager.__class__.__name__)
+                    continue
 
-            # Allow reactions to occur in response to result of last action
-            self._reactions.occur_in_response_to(manager.__class__.__name__, method_name, args, result)
+                result = method(*args)
+                status = status + result.status
+                all_results[manager.__class__.__name__] = result.to_transport_format()
+                self.__activity_stream.record(method_name + ":" + manager.__class__.__name__,
+                                              args,
+                                              result)
+
+                # Allow reactions to occur in response to result of last action
+                self._reactions.occur_in_response_to(manager.__class__.__name__, method_name, args, result)
 
         return Result(status, all_results)
 
-    def add_group(self, group_atts: dict) -> Result:
+    def add_group(self, group_atts: dict, managers: object) -> Result:
         """
         Adds a group through each configured Manager
 
@@ -104,6 +110,9 @@ class Router:
         group_atts : dict
             Properties defining the group. These are case insensitive and optional, except for a key "name", whose
             existence is enforced by the API client.
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -114,9 +123,9 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("add_group", [group_atts])
+        return self._safe_call("add_group", [group_atts], managers)
 
-    def get_group(self, name: str) -> Result:
+    def get_group(self, name: str, managers: object) -> Result:
         """
         Retrieves the group information from each configured Manager
 
@@ -124,6 +133,9 @@ class Router:
         ----------
         name: str
             The group name
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -134,9 +146,26 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("get_group", [name])
+        return self._safe_call("get_group", [name], managers)
 
-    def get_members(self, name: str) -> Result:
+    def list_groups(self, managers: object) -> Result:
+        """
+        Enumerate all group names that are defined in the backend
+
+        Parameters
+        ----------
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
+
+        Returns
+        -------
+        Result
+            Lists of group names generated by all backend managers that implement the method
+        """
+        return self._safe_call("list_groups", [], managers)
+
+    def get_members(self, name: str, managers: object) -> Result:
         """
         Retrieves the members of a group from each configured Manager
 
@@ -144,6 +173,9 @@ class Router:
         ----------
         name: str
             The group name
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -154,9 +186,9 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("get_members", [name])
+        return self._safe_call("get_members", [name], managers)
 
-    def update_group(self, group_atts: dict) -> Result:
+    def update_group(self, group_atts: dict, managers: object) -> Result:
         """
         Updates a group through each configured Manager
 
@@ -165,6 +197,9 @@ class Router:
         group_atts : dict
             Properties defining the group. These are case insensitive and optional, except for a key "name", whose
             existence is enforced by the API client.
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -175,9 +210,9 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("update_group", [group_atts])
+        return self._safe_call("update_group", [group_atts], managers)
 
-    def delete_group(self, name: str) -> Result:
+    def delete_group(self, name: str, managers: object) -> Result:
         """
         Deletes a group from each configured Manager
 
@@ -185,6 +220,9 @@ class Router:
         ----------
         name: str
             The group name
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -195,9 +233,9 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("delete_group", [name])
+        return self._safe_call("delete_group", [name], managers)
 
-    def exists_group(self, name: str) -> Result:
+    def exists_group(self, name: str, managers: object) -> Result:
         """
         Tests for the existence of a group through each configured Manager
 
@@ -205,6 +243,9 @@ class Router:
         ----------
         name: str
             The group name
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -215,9 +256,9 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("exists_group", [name])
+        return self._safe_call("exists_group", [name], managers)
 
-    def add_user(self, user_atts: dict) -> Result:
+    def add_user(self, user_atts: dict, managers: object) -> Result:
         """
         Add a user through each configured Manager
 
@@ -226,6 +267,9 @@ class Router:
         user_atts : dict
             Properties defining the user. These are case insensitive and optional, except for a key "name", whose
             existence is enforced by the API client.
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -236,9 +280,9 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("add_user", [user_atts])
+        return self._safe_call("add_user", [user_atts], managers)
 
-    def update_user(self, user_atts: dict) -> Result:
+    def update_user(self, user_atts: dict, managers: object) -> Result:
         """
         Update a user through each configured Manager
 
@@ -247,6 +291,9 @@ class Router:
         user_atts : dict
             New properties for the user. These are case insensitive and optional, except for a key "name", whose
             existence is enforced by the API client.
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -257,9 +304,9 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("update_user", [user_atts])
+        return self._safe_call("update_user", [user_atts], managers)
 
-    def get_user(self, name: str) -> Result:
+    def get_user(self, name: str, managers: object) -> Result:
         """
         Retrieve all information about a user from each configured Manager
 
@@ -267,6 +314,9 @@ class Router:
         ----------
         name: str
             The name of the user
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -277,9 +327,26 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("get_user", [name])
+        return self._safe_call("get_user", [name], managers)
 
-    def delete_user(self, name: str) -> Result:
+    def list_users(self, managers: object) -> Result:
+        """
+        Enumerate all user names that are defined in the backend
+
+        Parameters
+        ----------
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
+
+        Returns
+        -------
+        Result
+            Lists of user names generated by all backend managers that implement the method
+        """
+        return self._safe_call("list_users", [], managers)
+
+    def delete_user(self, name: str, managers: object) -> Result:
         """
         Delete a user from each configured Manager
 
@@ -287,6 +354,9 @@ class Router:
         ----------
         name: str
             The name of the user
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -297,9 +367,9 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("delete_user", [name])
+        return self._safe_call("delete_user", [name], managers)
 
-    def exists_user(self, name: str) -> Result:
+    def exists_user(self, name: str, managers: object) -> Result:
         """
         Test for existence of a user through each configured Manager
 
@@ -307,6 +377,9 @@ class Router:
         ----------
         name: str
             The name of the user
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -317,9 +390,9 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("exists_user", [name])
+        return self._safe_call("exists_user", [name], managers)
 
-    def set_user_default_group(self, user_name: str, group_name: str) -> Result:
+    def set_user_default_group(self, user_name: str, group_name: str, managers: object) -> Result:
         """
         Set the user's default group through each configured Manager
 
@@ -329,6 +402,9 @@ class Router:
             The name of the user
         group_name:
             The name of the group
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -339,9 +415,9 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("set_user_default_group", [user_name, group_name])
+        return self._safe_call("set_user_default_group", [user_name, group_name], managers)
 
-    def associate_user_to_group(self, user_name: str, group_name: str) -> Result:
+    def associate_user_to_group(self, user_name: str, group_name: str, managers: object) -> Result:
         """
         Make a user a member of a group through each configured Manager
 
@@ -351,6 +427,9 @@ class Router:
             The name of the user
         group_name:
             The name of the group
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -361,9 +440,9 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("associate_user_to_group", [user_name, group_name])
+        return self._safe_call("associate_user_to_group", [user_name, group_name], managers)
 
-    def disassociate_user_from_group(self, user_name: str, group_name: str) -> Result:
+    def disassociate_user_from_group(self, user_name: str, group_name: str, managers: object) -> Result:
         """
         Remove a user from a group through each configured Manager
 
@@ -373,6 +452,9 @@ class Router:
             The name of the user
         group_name:
             The name of the group
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -383,9 +465,9 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("disassociate_user_from_group", [user_name, group_name])
+        return self._safe_call("disassociate_user_from_group", [user_name, group_name], managers)
 
-    def disassociate_users_from_group(self, user_names: list, group_name: str) -> Result:
+    def disassociate_users_from_group(self, user_names: list, group_name: str, managers: object) -> Result:
         """
         Remove a list of users from a group through each configured Manager
 
@@ -395,6 +477,9 @@ class Router:
             The names of the users
         group_name:
             The name of the group
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         ---------
@@ -405,4 +490,4 @@ class Router:
         ---------
         #_safe_call
         """
-        return self._safe_call("disassociate_users_from_group", [user_names, group_name])
+        return self._safe_call("disassociate_users_from_group", [user_names, group_name], managers)
