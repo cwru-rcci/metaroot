@@ -50,7 +50,7 @@ class ClientAPI:
         except Exception as e:
             pass
 
-    def add_group(self, group_atts) -> Result:
+    def add_group(self, group_atts, managers="any") -> Result:
         """
         Request that a group with name group_atts['name'] be created
 
@@ -59,6 +59,9 @@ class ClientAPI:
         group_atts: dict
             A dictionary of free form parameters that will be passed to backend systems for group creation. group_atts
             must minimally contain a key 'name'
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         -------
@@ -76,10 +79,11 @@ class ClientAPI:
 
         request = {'action': 'add_group',
                    'group_atts': group_atts,
+                   'managers': managers
                    }
         return self._call(request)
 
-    def add_user(self, user_atts) -> Result:
+    def add_user(self, user_atts, managers="any") -> Result:
         """
         Request that a user with name user_atts['name'] be created
 
@@ -88,6 +92,9 @@ class ClientAPI:
         user_atts: dict
             A dictionary of free form parameters that will be passed to backend systems for user creation. user_atts
             must minimally contain a key 'name'
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         -------
@@ -105,10 +112,11 @@ class ClientAPI:
 
         request = {'action': 'add_user',
                    'user_atts': user_atts,
+                   'managers': managers
                    }
         return self._call(request)
 
-    def associate_user_to_group(self, user_name, group_name) -> Result:
+    def associate_user_to_group(self, user_name, group_name, managers="any") -> Result:
         """
         Request that user is added to group
 
@@ -118,6 +126,9 @@ class ClientAPI:
             Name of user
         group_name: str
             Group name
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         -------
@@ -128,10 +139,11 @@ class ClientAPI:
         request = {'action': 'associate_user_to_group',
                    'user_name': user_name,
                    'group_name': group_name,
+                   'managers': managers
                    }
         return self._call(request)
 
-    def delete_group(self, name) -> Result:
+    def delete_group(self, name, managers="any") -> Result:
         """
         Request to delete a group
 
@@ -139,6 +151,9 @@ class ClientAPI:
         ----------
         name: str
             Group name
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         -------
@@ -148,10 +163,11 @@ class ClientAPI:
         """
         request = {'action': 'delete_group',
                    'name': name,
+                   'managers': managers
                    }
         return self._call(request)
 
-    def delete_user(self, name) -> Result:
+    def delete_user(self, name, managers="any") -> Result:
         """
         Request to delete a user
 
@@ -159,6 +175,9 @@ class ClientAPI:
         ----------
         name: str
             User name
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         -------
@@ -168,10 +187,11 @@ class ClientAPI:
         """
         request = {'action': 'delete_user',
                    'name': name,
+                   'managers': managers
                    }
         return self._call(request)
 
-    def disassociate_user_from_group(self, user_name, group_name) -> Result:
+    def disassociate_user_from_group(self, user_name, group_name, managers="any") -> Result:
         """
         Request to remove a user from a group
 
@@ -181,6 +201,9 @@ class ClientAPI:
             Name of user
         group_name: str
             Group name
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         -------
@@ -191,10 +214,11 @@ class ClientAPI:
         request = {'action': 'disassociate_user_from_group',
                    'user_name': user_name,
                    'group_name': group_name,
+                   'managers': managers
                    }
         return self._call(request)
 
-    def disassociate_users_from_group(self, user_names, group_name) -> Result:
+    def disassociate_users_from_group(self, user_names, group_name, managers="any") -> Result:
         """
         Request to remove a list of users from a group
 
@@ -204,6 +228,9 @@ class ClientAPI:
             Names of users
         group_name: str
             Group name
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
 
         Returns
         -------
@@ -214,10 +241,11 @@ class ClientAPI:
         request = {'action': 'disassociate_users_from_group',
                    'user_names': user_names,
                    'group_name': group_name,
+                   'managers': managers
                    }
         return self._call(request)
 
-    def set_user_default_group(self, user_name, group_name) -> Result:
+    def set_user_default_group(self, user_name, group_name, managers="any") -> Result:
         """
         Request to set the default group for a user
 
@@ -227,7 +255,9 @@ class ClientAPI:
             Name of user
         group_name: str
             Group name
-
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
         Returns
         -------
         Result
@@ -237,17 +267,52 @@ class ClientAPI:
         request = {'action': 'set_user_default_group',
                    'user_name': user_name,
                    'group_name': group_name,
+                   'managers': managers
                    }
         return self._call(request)
 
-    def update_group(self, group_atts) -> Result:
+    def update_group(self, group_atts, managers="any") -> Result:
+        """
+        Change the attributes of a group with name group_atts['name'] to those in group_atts
+
+        Parameters
+        ----------
+        group_atts:
+            Attributes to update. Must contain a key 'name' that specifies the group name.
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
+        Returns
+        -------
+        Result
+            Depending on the underlying client this will be the status of message delivery (EventAPI) or the status
+            of the backend operations (MethodAPI)
+        """
         request = {'action': 'update_group',
                    'group_atts': group_atts,
+                   'managers': managers
                    }
         return self._call(request)
 
-    def update_user(self, user_atts) -> Result:
+    def update_user(self, user_atts, managers="any") -> Result:
+        """
+        Change the attributes of a user with name user_atts['name'] to those in user_atts
+
+        Parameters
+        ----------
+        user_atts:
+            Attributes to update. Must contain a key 'name' that specifies the user name.
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
+        Returns
+        -------
+        Result
+            Depending on the underlying client this will be the status of message delivery (EventAPI) or the status
+            of the backend operations (MethodAPI)
+        """
         request = {'action': 'update_user',
                    'user_atts': user_atts,
+                   'managers': managers
                    }
         return self._call(request)
