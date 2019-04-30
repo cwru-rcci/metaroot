@@ -49,8 +49,13 @@ def send_email(recipient_user_name: str, subject: str, body: str):
 
     """
     try:
-        config = get_config("SMTP")
-        if config.has("METAROOT_SMTP_SERVER") and config.has("METAROOT_SMTP_FROM"):
+
+        try:
+            config = get_config("SMTP")
+        except Exception as e:
+            config = None
+
+        if config is not None and config.has("METAROOT_SMTP_SERVER") and config.has("METAROOT_SMTP_FROM"):
             # Resolve/validate the recipient email adress
             resolver = DefaultEmailAddressResolver()
             if config.has("METAROOT_SMTP_ADDRESS_RESOLVER"):
