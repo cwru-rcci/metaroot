@@ -1,9 +1,9 @@
-from metaroot.api.abstract_client import ClientAPI
+from metaroot.api.base_client import BaseClient
 from metaroot.config import get_config
 from metaroot.event.producer import Producer
 
 
-class EventClient(ClientAPI):
+class EventClientAPI(BaseClient):
     """
     An event based API client where only the delivery status to the message queue is returned.
 

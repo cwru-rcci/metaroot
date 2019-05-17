@@ -3,7 +3,6 @@ import pika.exceptions
 import yaml
 import sys
 import inspect
-import signal
 import time
 import metaroot.config
 import metaroot.utils
@@ -130,6 +129,10 @@ class RPCServer:
 
         # Handle special case of the CLOSE_IMMEDIATELY message that shuts down the Server
         if message == "CLOSE_IMMEDIATELY":
+            ch.basic_publish(exchange='',
+                             routing_key=props.reply_to,
+                             properties=pika.BasicProperties(correlation_id=props.correlation_id),
+                             body=yaml.safe_dump({"status": 0, "response": "SHUTDOWN_INIT"}))
             ch.basic_ack(delivery_tag=method.delivery_tag)
             self._exit_requested = True
             self._channel.stop_consuming()
@@ -151,16 +154,24 @@ class RPCServer:
         return result["status"]
 
     def shutdown(self, signum, frame):
-        self._logger.warn("Shutting down...")
+        self._logger.warning("Shutting down...")
+        try:
+            self._handler.finalize()
+        except Exception as e:
+            self._logger.info("handler.finalize() raised an exception")
+            self._logger.exception(e)
+
         try:
             self._channel.stop_consuming()
-        except Exception:
+        except Exception as e:
             self._logger.info("channel.stop_consuming() raised an exception")
+            self._logger.exception(e)
 
         try:
             self._connection.close()
-        except Exception:
+        except Exception as e:
             self._logger.info("connection.close() raised an exception")
+            self._logger.exception(e)
 
     def connect(self):
         try:
@@ -221,9 +232,10 @@ class RPCServer:
 
         # Instantiate an instance of the class specified in the config file that will process messages
         self._handler = metaroot.utils.instantiate_object_from_class_path(self._config.get_mq_handler_class())
+        self._handler.initialize()
 
         # We want to exit gracefully if a SIGTERM is sent, so configure a handler
-        signal.signal(signal.SIGTERM, self.shutdown)
+        # signal.signal(signal.SIGTERM, self.shutdown)
 
         # Consume messages, attempting to recover from network dropout
         self._logger.info('starting consume loop for messages of type "%s"...', self._config.get_mq_queue_name())
@@ -255,8 +267,13 @@ class RPCServer:
                     self._logger.error("Will not attempt to reconnect")
                     break
 
-        self.shutdown(0, None)
         return 1
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.shutdown(0, None)
 
 
 if __name__ == "__main__":

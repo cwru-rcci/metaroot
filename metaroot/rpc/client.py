@@ -26,7 +26,7 @@ class RPCClient:
         Raises
         ----------
         Exception
-            If any underlying operations fail by raising an exception
+            If any underlying operations raise an exception
 
         """
         self.config = config
@@ -40,9 +40,15 @@ class RPCClient:
                                  config.get_log_file(),
                                  config.get_mq_file_verbosity(),
                                  config.get_mq_screen_verbosity())
-        self.connect()
 
-    def __del__(self):
+    def __enter__(self):
+        """
+        Attempt to shutdown cleanly by closing pika connection
+        """
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
         """
         Attempt to shutdown cleanly by closing pika connection
         """
@@ -59,6 +65,12 @@ class RPCClient:
         Callback to log cases where the server resumed accepting messages after a period of rejecting them
         """
         self.logger.WARN("The connection has been unblocked")
+
+    def _connection_closed_cb(self, frame):
+        """
+        Callback to log cases where the connection closed unexpectedly
+        """
+        self.logger.WARN("The connection closed")
 
     def connect(self) -> bool:
         """
@@ -138,13 +150,13 @@ class RPCClient:
         except Exception as e:
             self.logger.warn("closing connection raised an exception")
 
-    def send(self, obj) -> Result:
+    def send(self, obj: object) -> Result:
         """
         Method to initiate an RPC request
 
         Parameters
         ----------
-        obj: dict
+        obj: object
             A dictionary specifying a remote method name and arguments to invoke
 
         Returns
@@ -189,7 +201,7 @@ class RPCClient:
 
         # Wait for response
         while self.response is None:
-            self.logger.debug("Waiting for callback response to %s...", message)
+            self.logger.debug("Waiting for callback response to %s", str(obj))
             # Process events in
             self.connection.process_data_events(time_limit=5)
 

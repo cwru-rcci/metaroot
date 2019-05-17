@@ -1,10 +1,10 @@
-from metaroot.api.abstract_client import ClientAPI
+from metaroot.api.base_client import BaseClient
 from metaroot.api.result import Result
 from metaroot.config import get_config
 from metaroot.rpc.client import RPCClient
 
 
-class MethodClientAPI(ClientAPI):
+class MethodClientAPI(BaseClient):
     """
     An RPC based API client where requests are sent, and the result of the background operation is returned. This client
     is intended for use when the calling application can wait sufficiently long for a response. Methods to fetch/get

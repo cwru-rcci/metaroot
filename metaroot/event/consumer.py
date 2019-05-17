@@ -115,17 +115,26 @@ class Consumer:
         # Acknowledge message consumed
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    def shutdown(self, signum, frame):
+    def shutdown(self):
         self._logger.warning("Shutting down...")
+
+        try:
+            self._handler.initialize()
+        except Exception as e:
+            self._logger.info("channel.stop_consuming() raised an exception")
+            self._logger.exception(e)
+
         try:
             self._channel.stop_consuming()
-        except Exception:
+        except Exception as e:
             self._logger.info("channel.stop_consuming() raised an exception")
+            self._logger.exception(e)
 
         try:
             self._connection.close()
-        except Exception:
+        except Exception as e:
             self._logger.info("connection.close() raised an exception")
+            self._logger.exception(e)
 
     def connect(self):
         try:
@@ -184,10 +193,11 @@ class Consumer:
 
         # Instantiate an instance of the class specified in the config file that will process messages
         self._handler = metaroot.utils.instantiate_object_from_class_path(self._config.get_mq_handler_class())
+        self._handler.initialize()
         self._logger.info("instantiated handler %s", self._config.get_mq_handler_class())
 
         # We want to exit gracefully if a SIGTERM is sent, so configure a handler
-        signal.signal(signal.SIGTERM, self.shutdown)
+        # signal.signal(signal.SIGTERM, self.shutdown)
 
         # Consume messages, attempting to recover from network dropout
         self._logger.info('starting consume loop for messages of type "%s"...', self._config.get_mq_queue_name())
@@ -219,8 +229,19 @@ class Consumer:
                     self._logger.error("Will not attempt to reconnect")
                     break
 
-        self.shutdown(0, None)
         return 1
+
+    def __enter__(self):
+        """
+        Stub for contexts. Not setup required.
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Attempt to shutdown cleanly by closing pika connection
+        """
+        self.shutdown()
 
 
 if __name__ == "__main__":

@@ -36,9 +36,15 @@ class Producer:
                                   config.get_log_file(),
                                   config.get_mq_file_verbosity(),
                                   config.get_mq_screen_verbosity())
-        self.connect()
 
-    def __del__(self):
+    def __enter__(self):
+        """
+        Attempt to shutdown cleanly by closing pika connection
+        """
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
         """
         Attempt to shutdown cleanly by closing pika connection
         """

@@ -1,36 +1,41 @@
 import unittest
-from metaroot.api.event_client import EventClient
+from threading import Thread
+from metaroot.api.event_client import EventClientAPI
 from metaroot.api.result import Result
 from metaroot.event.consumer import Consumer
 
-sequence = 0
+
+class EventAPIRequestHandler:
+    def add_group(self, group_atts: dict) -> Result:
+        return Result(0, group_atts)
+
+    def initialize(self):
+        pass
+
+    def finalize(self):
+        pass
 
 
-class OrderedHandlerTest:
-    def echo(self, message: str) -> Result:
-        global sequence
-        if message != "hello {0}".format(sequence):
-            raise Exception("Expecting 'hello {0}' but consumed '{1}'".format(sequence, message))
-        sequence = sequence + 1
-        return Result(0, None)
+def run_server():
+    consumer = Consumer()
+    with consumer as c:
+        c.start("EVENTCLIENTAPI")
 
 
-class AEventAPITest(unittest.TestCase):
+class IntegrationTest(unittest.TestCase):
     def test_api_add_group(self):
-        api = EventClient()
-        result = api.add_group({})
-        self.assertEqual(0, result.status)
+        st = Thread(target=run_server)
+        st.start()
 
-
-class BEventDaemonTest(unittest.TestCase):
-    def test_daemon_add_group(self):
-        consumer = Consumer()
-        consumer.start("DAEMON")
+        with EventClientAPI() as api:
+            message = {"name": "value"}
+            result = api.add_group(message)
+            self.assertEqual(0, result.status)
+            api._call("CLOSE_IMMEDIATELY")
+        st.join()
 
 
 if __name__ == '__main__':
-    suite = unittest.TestLoader().loadTestsFromTestCase(AEventAPITest)
+    suite = unittest.TestLoader().loadTestsFromTestCase(IntegrationTest)
     unittest.TextTestRunner(verbosity=2).run(suite)
 
-    suite = unittest.TestLoader().loadTestsFromTestCase(BEventDaemonTest)
-    unittest.TextTestRunner(verbosity=2).run(suite)

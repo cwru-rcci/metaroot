@@ -1,7 +1,7 @@
 from metaroot.api.result import Result
 
 
-class ClientAPI:
+class BaseClient:
     """
     Client for performing administrative tasks in metaroot backend infrastructure.
     """
@@ -17,21 +17,27 @@ class ClientAPI:
         """
         self.client = client
 
-    def __del__(self):
+    def __enter__(self):
         """
-        Destructor attempts a clean shutdown by closing the underlying client used for communication
-        :return:
+        Connect the RPC client to the message queue if manager is instantiated by a with statement
         """
-        self.close()
+        self.client.connect()
+        return self
 
-    def _call(self, request: dict) -> Result:
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Disconnects the RPC client from the message queue when with statement block is exited
+        """
+        self.client.close()
+
+    def _call(self, request: object) -> Result:
         """
         Wrapper around the client send method (plan to add debug logging here)
 
         Parameters
         ----------
-        request: dict
-            A dictionary the defines the request
+        request: object
+            A dictionary the defines the request, or a simple string
 
         Returns
         ---------
@@ -41,14 +47,17 @@ class ClientAPI:
         """
         return self.client.send(request)
 
-    def close(self):
+    def initialize(self):
         """
-        Close the API instance
+        Connects the RPC client to the message queue
         """
-        try:
-            self.client.close()
-        except Exception as e:
-            pass
+        self.client.connect()
+
+    def finalize(self):
+        """
+        Disconnects the RPC client fomr the message queue
+        """
+        self.client.close()
 
     def add_group(self, group_atts, managers="any") -> Result:
         """

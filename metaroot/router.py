@@ -39,17 +39,44 @@ class Router:
         self._managers = []
         for hook in hooks:
             try:
-                self._managers.append(instantiate_object_from_class_path(hook))
-                self._logger.info("Loaded manager for %s", hook)
+                manager = instantiate_object_from_class_path(hook)
+                try:
+                    # Managers must implement method "initialize()" and finalize()
+                    method = getattr(manager, "initialize")
+                    method()
+                    getattr(manager, "finalize")
+                    self._managers.append(manager)
+                    self._logger.info("Loaded manager for %s", hook)
+                except AttributeError as e:
+                    self._logger.error("Method 'initialize' or 'finalize' is not defined for manager/hook %s",
+                                       manager.__class__.__name__)
+
             except Exception as e:
                 self._logger.exception(e)
                 self._logger.error("Exception while instantiating hook %s", hook)
+
+        if len(self._managers) < len(hooks):
+            self._logger.error("%d of %d hooks were initialized. refusing to run with reduced set.",
+                               len(self._managers), len(hooks))
+            exit(1)
 
         self._reactions = None
         if config.has("METAROOT_REACTION_HANDLER"):
             self._reactions = instantiate_object_from_class_path(config.get("METAROOT_REACTION_HANDLER"))
         else:
             self._reactions = DefaultReactions()
+
+    def __enter__(self):
+        """
+        Stub for instantiation in context manager
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Finalize all the managers before exiting the context block
+        """
+        self.finalize()
 
     def _safe_call(self, method_name: str, args: list, target_managers="any") -> Result:
         """
@@ -100,6 +127,19 @@ class Router:
                 self._reactions.occur_in_response_to(manager.__class__.__name__, method_name, args, result)
 
         return Result(status, all_results)
+
+    def initialize(self):
+        """
+        Stub to adhere to general contract.
+        """
+        pass
+
+    def finalize(self):
+        """
+        Explicitly finalize all managers for clean shutdown
+        """
+        for manager in self._managers:
+            manager.finalize()
 
     def add_group(self, group_atts: dict, managers: object) -> Result:
         """
