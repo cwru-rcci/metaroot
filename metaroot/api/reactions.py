@@ -28,7 +28,7 @@ class DefaultReactions:
             The result of the method call
         """
         if result.is_error():
-            send_email(config.get("METAROOT_REACTION_NOTIFY"),
+            send_email(config.get("REACTION_NOTIFY"),
                        "metaroot operation failed",
                        "<table>" +
                        "<tr><td>Class</td><td>"+clazz+"</td></tr>"
