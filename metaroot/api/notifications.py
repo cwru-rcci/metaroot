@@ -1,7 +1,7 @@
 import email.message
 import smtplib
 import re
-from metaroot.config import get_config, get_global_config, Config
+from metaroot.config import get_config, get_global_config
 from metaroot.utils import get_logger, instantiate_object_from_class_path
 
 global_config = get_global_config()
@@ -14,7 +14,7 @@ logger = get_logger(__name__,
 class DefaultEmailAddressResolver:
     """
     Performs a very basic validation that the argument user name looks like a valid email address using a regular
-    expression. If y = [one or more chars that cannot contain @] the regex tests for strings that match y@y.y
+    expression. If 'x' is one or more chars that does not contain @, the regex tests for strings that match x@x.x
     """
     @staticmethod
     def resolve_to_email_address(user_name: str) -> str:
@@ -51,40 +51,40 @@ def send_email(recipient_user_name: str, subject: str, body: str):
     try:
 
         try:
-            config = get_config("SMTP")
+            config = get_config("NOTIFICATIONS")
         except Exception as e:
             config = None
 
-        if config is not None and config.has("METAROOT_SMTP_SERVER") and config.has("METAROOT_SMTP_FROM"):
+        if config is not None and config.has("SMTP_SERVER") and config.has("SMTP_FROM"):
             # Resolve/validate the recipient email adress
             resolver = DefaultEmailAddressResolver()
-            if config.has("METAROOT_SMTP_ADDRESS_RESOLVER"):
-                resolver = instantiate_object_from_class_path(config.get("METAROOT_SMTP_ADDRESS_RESOLVER"))
+            if config.has("SMTP_ADDRESS_RESOLVER"):
+                resolver = instantiate_object_from_class_path(config.get("SMTP_ADDRESS_RESOLVER"))
 
             # # # #
             # The following is based heavily on https://stackoverflow.com/a/32129736/3357118
             msg = email.message.Message()
             msg['Subject'] = subject
-            msg['From'] = config.get("METAROOT_SMTP_FROM")
+            msg['From'] = config.get("SMTP_FROM")
             msg['To'] = resolver.resolve_to_email_address(recipient_user_name)
             msg.add_header('Content-Type', 'text/html')
             msg.set_payload(body)
 
-            s = smtplib.SMTP(config.get("METAROOT_SMTP_SERVER"))
+            s = smtplib.SMTP(config.get("SMTP_SERVER"))
 
             # Evaluate TLS configuration and start TLS is requested
-            if config.has("METAROOT_START_TLS") and config.get("METAROOT_START_TLS"):
+            if config.has("SMTP_START_TLS") and config.get("SMTP_START_TLS"):
                 s.starttls()
             else:
-                logger.warn("The value of METAROOT_START_TLS is missing or did not evaluate to True, so not using TLS")
+                logger.warning("The value of SMTP_START_TLS is missing or did not evaluate to True, so not using TLS")
 
             # If a username and password were specified, authenticte to the SMPT server
-            if config.has("METAROOT_SMTP_USER") and config.has("METAROOT_SMTP_PASSWORD"):
-                logger.info("Authenticating to the SMPT server")
-                s.login(config.get("METAROOT_SMTP_USER"),
-                        config.get("METAROOT_SMTP_PASSWORD"))
+            if config.has("SMTP_USER") and config.has("SMTP_PASSWORD"):
+                logger.debug("Authenticating to the SMTP server")
+                s.login(config.get("SMTP_USER"),
+                        config.get("SMTP_PASSWORD"))
             else:
-                logger.info("Not authenticating to the SMTP server")
+                logger.debug("Not authenticating to the SMTP server")
 
             s.sendmail(msg['From'], [msg['To']], msg.as_string())
             s.quit()
