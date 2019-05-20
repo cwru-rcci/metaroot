@@ -41,7 +41,7 @@ class Router:
             try:
                 manager = instantiate_object_from_class_path(hook)
                 try:
-                    # Managers must implement method "initialize()" and finalize()
+                    # Managers must implement methods "initialize()" and "finalize()" to ensure clean statup/shutdown
                     method = getattr(manager, "initialize")
                     method()
                     getattr(manager, "finalize")
@@ -61,8 +61,8 @@ class Router:
             exit(1)
 
         self._reactions = None
-        if config.has("METAROOT_REACTION_HANDLER"):
-            self._reactions = instantiate_object_from_class_path(config.get("METAROOT_REACTION_HANDLER"))
+        if config.has("REACTION_HANDLER"):
+            self._reactions = instantiate_object_from_class_path(config.get("REACTION_HANDLER"))
         else:
             self._reactions = DefaultReactions()
 
