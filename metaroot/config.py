@@ -8,18 +8,18 @@ class ConfigParams(Enum):
     """
     Named parameters used for mapping configuration file content to getters
     """
-    METAROOT_MQUSER = 'METAROOT_MQUSER'
-    METAROOT_MQPASS = 'METAROOT_MQPASS'
-    METAROOT_MQHOST = 'METAROOT_MQHOST'
-    METAROOT_MQPORT = 'METAROOT_MQPORT'
-    METAROOT_MQNAME = 'METAROOT_MQNAME'
-    METAROOT_MQHDLR = 'METAROOT_MQHDLR'
-    METAROOT_SCREEN_VERBOSITY = 'METAROOT_SCREEN_VERBOSITY'
-    METAROOT_FILE_VERBOSITY = 'METAROOT_FILE_VERBOSITY'
-    METAROOT_LOG_FILE = 'METAROOT_LOG_FILE'
-    METAROOT_HOOKS = 'METAROOT_HOOKS'
-    METAROOT_ACTIVITY_STREAM = 'METAROOT_ACTIVITY_STREAM'
-    METAROOT_DATABASE = 'METAROOT_DATABASE'
+    MQUSER = 'MQUSER'
+    MQPASS = 'MQPASS'
+    MQHOST = 'MQHOST'
+    MQPORT = 'MQPORT'
+    MQNAME = 'MQNAME'
+    MQHDLR = 'MQHDLR'
+    SCREEN_VERBOSITY = 'SCREEN_VERBOSITY'
+    FILE_VERBOSITY = 'FILE_VERBOSITY'
+    LOG_FILE = 'LOG_FILE'
+    HOOKS = 'HOOKS'
+    ACTIVITY_STREAM_CLASS = 'ACTIVITY_STREAM_CLASS'
+    ACTIVITY_STREAM_DATABASE = 'ACTIVITY_STREAM_DATABASE'
 
 
 config_logger = None
@@ -32,10 +32,10 @@ class Config:
 
     def __init__(self):
         self._data = dict()
-        self._data[ConfigParams.METAROOT_LOG_FILE.value] = "metaroot.log"
-        self._data[ConfigParams.METAROOT_SCREEN_VERBOSITY.value] = "INFO"
-        self._data[ConfigParams.METAROOT_FILE_VERBOSITY.value] = "INFO"
-        self._data[ConfigParams.METAROOT_ACTIVITY_STREAM.value] = "$NONE"
+        self._data[ConfigParams.LOG_FILE.value] = "metaroot.log"
+        self._data[ConfigParams.SCREEN_VERBOSITY.value] = "INFO"
+        self._data[ConfigParams.FILE_VERBOSITY.value] = "INFO"
+        self._data[ConfigParams.ACTIVITY_STREAM_CLASS.value] = "$NONE"
 
     def get(self, key):
         return self._data[key]
@@ -51,46 +51,40 @@ class Config:
         return self._data
 
     def get_mq_user(self):
-        return self._data[ConfigParams.METAROOT_MQUSER.value]
+        return self._data[ConfigParams.MQUSER.value]
 
     def get_mq_pass(self):
-        return self._data[ConfigParams.METAROOT_MQPASS.value]
+        return self._data[ConfigParams.MQPASS.value]
 
     def get_mq_host(self):
-        return self._data[ConfigParams.METAROOT_MQHOST.value]
+        return self._data[ConfigParams.MQHOST.value]
 
     def get_mq_port(self):
-        return int(self._data[ConfigParams.METAROOT_MQPORT.value])
-
-    def get_mq_queue_names(self):
-        return self._data[ConfigParams.METAROOT_MQNAME.value]
+        return int(self._data[ConfigParams.MQPORT.value])
 
     def get_mq_queue_name(self):
-        if isinstance(self._data[ConfigParams.METAROOT_MQNAME.value], list):
-            return self._data[ConfigParams.METAROOT_MQNAME.value][0]
-        else:
-            return self._data[ConfigParams.METAROOT_MQNAME.value]
+        return self._data[ConfigParams.MQNAME.value]
 
     def get_mq_handler_class(self):
-        return self._data[ConfigParams.METAROOT_MQHDLR.value]
+        return self._data[ConfigParams.MQHDLR.value]
 
-    def get_mq_screen_verbosity(self):
-        return self._data[ConfigParams.METAROOT_SCREEN_VERBOSITY.value]
+    def get_screen_verbosity(self):
+        return self._data[ConfigParams.SCREEN_VERBOSITY.value]
 
-    def get_mq_file_verbosity(self):
-        return self._data[ConfigParams.METAROOT_FILE_VERBOSITY.value]
+    def get_file_verbosity(self):
+        return self._data[ConfigParams.FILE_VERBOSITY.value]
 
     def get_log_file(self):
-        return self._data[ConfigParams.METAROOT_LOG_FILE.value]
+        return self._data[ConfigParams.LOG_FILE.value]
 
     def get_hooks(self):
-        return self._data[ConfigParams.METAROOT_HOOKS.value]
+        return self._data[ConfigParams.HOOKS.value]
 
     def get_activity_stream(self):
-        return self._data[ConfigParams.METAROOT_ACTIVITY_STREAM.value]
+        return self._data[ConfigParams.ACTIVITY_STREAM_CLASS.value]
 
     def get_activity_stream_db(self):
-        return self._data[ConfigParams.METAROOT_DATABASE.value]
+        return self._data[ConfigParams.ACTIVITY_STREAM_DATABASE.value]
 
 
 def debug_config(config: Config):
@@ -101,16 +95,14 @@ def debug_config(config: Config):
 def get_config(key: str):
     """
     Returns environment specific information by searching a set of locations. The current implementation searches for
-    METAROOT_'key' in the following:
-        - The top-level keys of the global 'auto' which is loaded from local file 'metaroot[-test].yaml' if it exists
-        - The attributes of django.conf.settings
+    'key' in the top-level keys of the global 'auto' which is loaded from local file 'metaroot[-test].yaml'
 
-    The returned configuration is created by augmenting/overwriting the parameters defined for key METAROOT_GLOBAL
-    with all parameters defined for METAROOT_'key'.
+    The returned configuration is created by augmenting/overwriting the parameters defined for key 'GLOBAL'
+    with all parameters defined for 'key'.
 
-    The convention used throughout the project is that class pass their class name as 'key'. E.g.
+    The convention used throughout the project is that classes pass their class name as 'key'. E.g.
     metaroot.slurm.manager_rpc.SlurmManager calls locate_config("SlurmManager") which searches for the key
-    METAROOT_SLURMMANAGER.
+    'SLURMMANAGER'.
 
     Parameters
     ----------
@@ -127,47 +119,16 @@ def get_config(key: str):
     Exception
         If no configuration could be found, or the configuration information was invalid
     """
-    key = "METAROOT_" + key.upper()
+    key = key.upper()
     config = Config()
 
-    # #
-    #
-    # Check for in-memory settings first
-    #
-    # #
-    ready = False
-
-    # #
-    #
-    # Check for config file loaded by
-    #
-    # #
     try:
-        config.populate(auto["METAROOT_GLOBAL"])
+        config.populate(auto["GLOBAL"])
         config.populate(auto[key])
         ready = True
         config_logger.info("%s using auto-configuration from global", key)
-    except Exception:
-        pass
-
-    # #
-    #
-    # Check if running in Django
-    #
-    # #
-    if not ready:
-        try:
-            from django.conf import settings
-            config.populate(getattr(settings, "METAROOT_GLOBAL"))
-            config.populate(getattr(settings, key))
-            ready = True
-            config_logger.info("%s using auto-configuration from DJango settings", key)
-        except Exception:
-            pass
-
-    if ready:
         return config
-    else:
+    except Exception:
         config_logger.error("Could not locate configuration for %s in any standard locations", key)
         raise Exception("Could not locate configuration in any standard locations")
 
@@ -182,6 +143,10 @@ def load_file_based_config():
     ----------
     Config
         The contents of the YAML file as an object if it was located, and None otherwise
+
+    Raises
+    ----------
+        Exception if an IO or parsing error occurs while loading the config file, or if no config file could not be found
     """
     path = ""
     ready = False
@@ -202,21 +167,30 @@ def load_file_based_config():
         else:
             break
 
-        stream = open(path+config_file, 'r')
-        config = yaml.safe_load(stream)
-        stream.close()
+        # Load config, raises exception on error
+        try:
+            stream = open(path+config_file, 'r')
+            config = yaml.safe_load(stream)
+            stream.close()
+            config = config["METAROOT"]
 
+        except Exception as e:
+            print("An IO or parsing error was encountered while loading the config file {0}".format(path+config_file))
+            raise e
+
+        # If we found a configuration file, we want to output logging statements in the requested way, so configure a
+        # logger for the config class now
         wrapper = Config()
-        wrapper.populate(config["METAROOT_GLOBAL"])
+        wrapper.populate(config["GLOBAL"])
         config_logger = get_logger("CONFIG",
                                    wrapper.get_log_file(),
-                                   wrapper.get_mq_file_verbosity(),
-                                   wrapper.get_mq_screen_verbosity())
+                                   wrapper.get_file_verbosity(),
+                                   wrapper.get_screen_verbosity())
 
         config_logger.info("Loaded first configuration file found at %s", path+config_file)
         return config
 
-    return None
+    raise Exception("Could not locate a configuration file")
 
 
 def get_global_config():
@@ -226,7 +200,7 @@ def get_global_config():
     Returns
     ----------
     Config
-        The configuration if it is found
+        The global configuration as a Config object
 
     Raises
     ----------
@@ -234,7 +208,7 @@ def get_global_config():
         If no configuration could be found, or the configuration information was invalid
     """
     config = Config()
-    config.populate(auto["METAROOT_GLOBAL"])
+    config.populate(auto["GLOBAL"])
     return config
 
 
