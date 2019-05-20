@@ -55,7 +55,7 @@ class BaseClient:
 
     def finalize(self):
         """
-        Disconnects the RPC client fomr the message queue
+        Disconnects the RPC client from the message queue
         """
         self.client.close()
 
@@ -117,7 +117,7 @@ class BaseClient:
             If user_atts does not contain a name attribute
         """
         if 'name' not in user_atts:
-            raise Exception("group_atts must contain a key 'name'")
+            raise Exception("user_atts must contain a key 'name'")
 
         request = {'action': 'add_user',
                    'user_atts': user_atts,

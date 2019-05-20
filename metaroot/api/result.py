@@ -3,7 +3,7 @@ class Result:
     A standard result wrapper to ensure uniformity of return types at the top level.
     """
 
-    def __init__(self, status: int, response):
+    def __init__(self, status: int, response: object):
         """
         Initialize a new Result
 

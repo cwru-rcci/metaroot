@@ -10,7 +10,7 @@ import metaroot.utils
 
 class Consumer:
     """
-    Consumes AMQP messages and maps them to method calls of a configured "handler" class. This is for event based
+    Consumes AMQP messages and maps them to method calls of a configured "manager" class. This is for event based
     workflows where no response is expected by the sender.
     """
 
@@ -21,6 +21,18 @@ class Consumer:
         self._channel = None
         self._config = None
         self._exit_requested = False
+
+    def __enter__(self):
+        """
+        Stub for contexts. Not setup required.
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Attempt to shutdown cleanly by closing pika connection
+        """
+        self.shutdown()
 
     @staticmethod
     def get_error_response(status: int):
@@ -48,7 +60,7 @@ class Consumer:
             self._logger.error("The message does not define an 'action' -> %s", message)
             return self.get_error_response(450)
 
-        # Lookup the requested method in the handler object
+        # Lookup the requested method in the manager object
         try:
             method = getattr(obj, message['action'])
         except AttributeError:
@@ -171,7 +183,7 @@ class Consumer:
 
     def start(self, config_key: str):
         """
-        Calls a method of an object
+        Connect the message queue and consume messages until shutdown
 
         Parameters
         ----------
@@ -230,18 +242,6 @@ class Consumer:
                     break
 
         return 1
-
-    def __enter__(self):
-        """
-        Stub for contexts. Not setup required.
-        """
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """
-        Attempt to shutdown cleanly by closing pika connection
-        """
-        self.shutdown()
 
 
 if __name__ == "__main__":

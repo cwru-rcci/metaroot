@@ -68,13 +68,14 @@ class Router:
 
     def __enter__(self):
         """
-        Stub for instantiation in context manager
+        Stub for instantiation in context manager. The router is meant to run in a consumer or RPC server so it needs
+        to behave like a manager object, but no actions are required for initialize()
         """
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         """
-        Finalize all the managers before exiting the context block
+        Finalize all the managers before exiting the context block to ensure clean shutdown of message queue connections
         """
         self.finalize()
 
@@ -130,7 +131,8 @@ class Router:
 
     def initialize(self):
         """
-        Stub to adhere to general contract.
+        Stub to adhere to general contract. The router is running in a consumer or RPC server so it needs to behave
+        like a manager object, but it doesn't need to take an special actions on initialize.
         """
         pass
 
