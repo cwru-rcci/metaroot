@@ -10,7 +10,7 @@ import metaroot.utils
 
 class RPCServer:
     """
-    An RPC server based on pika that maps requests to methods of an object hosted by the server.
+    An RPC server based on pika that maps requests to methods of a "manager" object hosted by the server.
     """
 
     def __init__(self):
@@ -23,6 +23,27 @@ class RPCServer:
         self._channel = None
         self._config = None
         self._exit_requested = False
+
+    def __enter__(self):
+        """
+        Stub for instantiating the server in a "with" statement. No actions necessary/taken.
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """
+        Cleanly shutdown the server when reaching the end of a with/context block
+
+        Parameters
+        ----------
+        exc_type
+            Unused
+        exc_value
+            Unused
+        traceback
+            Unused
+        """
+        self.shutdown(0, None)
 
     @staticmethod
     def get_error_response(status: int):
@@ -154,6 +175,16 @@ class RPCServer:
         return result["status"]
 
     def shutdown(self, signum, frame):
+        """
+        Finalize the hosted manager object and close the connection to the message queue server.
+
+        Parameters
+        ----------
+        signum
+            Unused
+        frame
+            Unused
+        """
         self._logger.warning("Shutting down...")
         try:
             self._handler.finalize()
@@ -174,6 +205,16 @@ class RPCServer:
             self._logger.exception(e)
 
     def connect(self):
+        """
+        Create a connection the message queue server.
+
+        Returns
+        -------
+        True
+            If connection is successful
+        False
+            If the connection could not be established
+        """
         try:
             # Pretty standard connection stuff (user, password, etc)
             credentials = pika.PlainCredentials(self._config.get_mq_user(), self._config.get_mq_pass())
@@ -209,12 +250,12 @@ class RPCServer:
 
     def start(self, config_key):
         """
-        Calls a method of an object
+        Instantiates the hosted manager object and consumes messages that map to methods of the manager
 
         Parameters
         ----------
         config_key: str
-            Key identifying where to find options in the global configuration dict for this consumer
+            Key identifying which node of the configuration tree to use
 
         Returns
         ----------
@@ -268,12 +309,6 @@ class RPCServer:
                     break
 
         return 1
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.shutdown(0, None)
 
 
 if __name__ == "__main__":

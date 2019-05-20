@@ -54,13 +54,13 @@ class Producer:
         """
         Callback to log cases where the server began rejecting messages
         """
-        self._logger.WARN("The connection has been blocked by the server")
+        self._logger.warning("The connection has been blocked by the server")
 
     def _connection_unblocked_cb(self, frame):
         """
         Callback to log cases where the server resumed accepting messages after a period of rejecting them
         """
-        self._logger.WARN("The connection has been unblocked")
+        self._logger.warning("The connection has been unblocked")
 
     def connect(self):
         """
