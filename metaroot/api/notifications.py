@@ -7,8 +7,8 @@ from metaroot.utils import get_logger, instantiate_object_from_class_path
 global_config = get_global_config()
 logger = get_logger(__name__,
                     global_config.get_log_file(),
-                    global_config.get_mq_file_verbosity(),
-                    global_config.get_mq_screen_verbosity())
+                    global_config.get_file_verbosity(),
+                    global_config.get_screen_verbosity())
 
 
 class DefaultEmailAddressResolver:

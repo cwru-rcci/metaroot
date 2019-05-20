@@ -25,8 +25,8 @@ class Router:
         config = get_config(self.__class__.__name__)
         self._logger = get_logger(self.__class__.__name__,
                                   config.get_log_file(),
-                                  config.get_mq_file_verbosity(),
-                                  config.get_mq_screen_verbosity())
+                                  config.get_file_verbosity(),
+                                  config.get_screen_verbosity())
 
         if config.get_activity_stream() != "$NONE":
             self._logger.info("Logging activity using %s", config.get_activity_stream())

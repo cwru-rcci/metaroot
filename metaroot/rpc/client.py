@@ -38,8 +38,8 @@ class RPCClient:
         self.queue = self.config.get_mq_queue_name()
         self.logger = get_logger(RPCClient.__name__,
                                  config.get_log_file(),
-                                 config.get_mq_file_verbosity(),
-                                 config.get_mq_screen_verbosity())
+                                 config.get_file_verbosity(),
+                                 config.get_screen_verbosity())
 
     def __enter__(self):
         """

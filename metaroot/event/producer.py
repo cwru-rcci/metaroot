@@ -34,8 +34,8 @@ class Producer:
         self.queue = config.get_mq_queue_name()
         self._logger = get_logger(Producer.__name__,
                                   config.get_log_file(),
-                                  config.get_mq_file_verbosity(),
-                                  config.get_mq_screen_verbosity())
+                                  config.get_file_verbosity(),
+                                  config.get_screen_verbosity())
 
     def __enter__(self):
         """

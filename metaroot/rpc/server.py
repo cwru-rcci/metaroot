@@ -227,8 +227,8 @@ class RPCServer:
         # Setup our custom logging to use the class name processing the messages as its tag
         self._logger = metaroot.utils.get_logger(self.__class__.__name__,
                                                  self._config.get_log_file(),
-                                                 self._config.get_mq_file_verbosity(),
-                                                 self._config.get_mq_screen_verbosity())
+                                                 self._config.get_file_verbosity(),
+                                                 self._config.get_screen_verbosity())
 
         # Instantiate an instance of the class specified in the config file that will process messages
         self._handler = metaroot.utils.instantiate_object_from_class_path(self._config.get_mq_handler_class())
