@@ -2,7 +2,8 @@ from metaroot.api.result import Result
 from metaroot.api.notifications import send_email
 from metaroot.config import get_config
 
-config = get_config("REACTIONS")
+
+config = get_config("DEFAULTREACTIONS")
 
 
 class DefaultReactions:
@@ -27,6 +28,8 @@ class DefaultReactions:
         result: Result
             The result of the method call
         """
+        global config
+
         if result.is_error():
             send_email(config.get("REACTION_NOTIFY"),
                        "metaroot operation failed",
