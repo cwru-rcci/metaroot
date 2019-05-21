@@ -128,7 +128,7 @@ class Consumer:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     def shutdown(self):
-        self._logger.warning("Shutting down...")
+        self._logger.info("Shutting down...")
 
         try:
             self._handler.initialize()

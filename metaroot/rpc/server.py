@@ -185,7 +185,7 @@ class RPCServer:
         frame
             Unused
         """
-        self._logger.warning("Shutting down...")
+        self._logger.info("Shutting down...")
         try:
             self._handler.finalize()
         except Exception as e:
