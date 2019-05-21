@@ -1,0 +1,30 @@
+# If no configuration file is specified via environment variable, this file is auto-discovered
+METAROOT:
+    GLOBAL:
+        MQUSER: 'user'
+        MQPASS: 'pass'
+        MQHOST: 'host'
+        MQPORT: 1234
+        MQNAME: 'name'
+        MQHDLR: 'handlerClassName'
+        SCREEN_VERBOSITY: WARN
+        FILE_VERBOSITY: ERROR
+        LOG_FILE: '$NONE'
+        HOOKS: ['HOOK1', 'HOOK2']
+        ACTIVITY_STREAM_CLASS : 'asClassName'
+        ACTIVITY_STREAM_DATABASE: 'dataBaseName'
+
+    CLAZZ:
+        MQNAME: 'classQueueName'
+        MQHDLR: 'handlerClassName2'
+        SCREEN_VERBOSITY: WARN
+        FILE_VERBOSITY: ERROR
+        LOG_FILE: '$NONE'
+        HOOKS: ['HOOK3', 'HOOK4']
+        ACTIVITY_STREAM_CLASS: 'asClassName2'
+        ACTIVITY_STREAM_DATABASE: 'dataBaseName2'
+        CUSTOM1: "Value1"
+
+    NOTIFICATIONS:
+        SMTP_SERVER: "localhost"
+        SMTP_FROM: "user@localhost"
