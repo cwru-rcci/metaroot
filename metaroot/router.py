@@ -1,7 +1,6 @@
-from metaroot.config import get_config
+from metaroot.config import get_config, debug_config
 from metaroot.utils import instantiate_object_from_class_path, get_logger
 from metaroot.api.result import Result
-from metaroot.api.reactions import DefaultReactions
 
 
 class NullActivityStream:
@@ -27,6 +26,10 @@ class Router:
                                   config.get_log_file(),
                                   config.get_file_verbosity(),
                                   config.get_screen_verbosity())
+
+        # Output all config parameters when debugging
+        self._logger.debug("VVVVVV Router Config VVVVVV")
+        debug_config(config)
 
         if config.get_activity_stream() != "$NONE":
             self._logger.info("Logging activity using %s", config.get_activity_stream())
@@ -64,6 +67,8 @@ class Router:
         if config.has("REACTION_HANDLER"):
             self._reactions = instantiate_object_from_class_path(config.get("REACTION_HANDLER"))
         else:
+            self._logger.info("No reaction handle specified so using DefaultReactions")
+            from metaroot.api.reactions import DefaultReactions
             self._reactions = DefaultReactions()
 
     def __enter__(self):

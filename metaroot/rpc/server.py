@@ -263,13 +263,16 @@ class RPCServer:
             Returns 1 on exit
         """
         self._config = metaroot.config.get_config(config_key)
-        metaroot.config.debug_config(self._config)
 
         # Setup our custom logging to use the class name processing the messages as its tag
         self._logger = metaroot.utils.get_logger(self.__class__.__name__,
                                                  self._config.get_log_file(),
                                                  self._config.get_file_verbosity(),
                                                  self._config.get_screen_verbosity())
+
+        # Output debug logging
+        self._logger.debug("VVVVVV RPCServer Config VVVVVV")
+        metaroot.config.debug_config(self._config)
 
         # Instantiate an instance of the class specified in the config file that will process messages
         self._handler = metaroot.utils.instantiate_object_from_class_path(self._config.get_mq_handler_class())
