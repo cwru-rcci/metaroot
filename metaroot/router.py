@@ -32,7 +32,7 @@ class Router:
             self._logger.info("Logging activity using %s", config.get_activity_stream())
             self.__activity_stream = instantiate_object_from_class_path(config.get_activity_stream())
         else:
-            self._logger.warning("***Not recording an activity stream***")
+            self._logger.info("***Not recording an activity stream***")
             self.__activity_stream = NullActivityStream()
 
         hooks = config.get_hooks()
