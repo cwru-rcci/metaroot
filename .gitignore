@@ -10,7 +10,8 @@ MANIFEST.in
 # Ignore all YAML files except the unit/integration testing config
 *.yml
 *.yaml
-!metaroot/tests/metaroot-test.yaml
+!metaroot-test.yaml
+!metaroot-integration-tests.yaml
 
 *.log
 *.sh
