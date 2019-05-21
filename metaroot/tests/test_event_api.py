@@ -23,7 +23,7 @@ def run_server():
 
 
 class IntegrationTest(unittest.TestCase):
-    def test_api_add_group(self):
+    def test_event_api_integration(self):
         st = Thread(target=run_server)
         st.start()
 

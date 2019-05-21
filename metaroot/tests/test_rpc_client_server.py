@@ -30,7 +30,7 @@ def run_server():
 
 
 class IntegrationTest(unittest.TestCase):
-    def test_integration(self):
+    def test_rpc_client_server_integration(self):
         st = Thread(target=run_server)
         st.start()
 
