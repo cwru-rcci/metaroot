@@ -2,9 +2,9 @@ import unittest
 import metaroot.config
 
 
-class MetarootTests(unittest.TestCase):
+class MetarootAutoDiscoverConfigTests(unittest.TestCase):
 
-    def test_global_config(self):
+    def test_auto_discover_global_config(self):
         config = metaroot.config.get_global_config()
         self.assertEqual("user", config.get_mq_user())
         self.assertEqual("pass", config.get_mq_pass())
@@ -12,14 +12,14 @@ class MetarootTests(unittest.TestCase):
         self.assertEqual(1234, config.get_mq_port())
         self.assertEqual("name", config.get_mq_queue_name())
         self.assertEqual("handlerClassName", config.get_mq_handler_class())
-        self.assertEqual("INFO", config.get_screen_verbosity())
+        self.assertEqual("WARN", config.get_screen_verbosity())
         self.assertEqual("ERROR", config.get_file_verbosity())
         self.assertEqual("$NONE", config.get_log_file())
         self.assertEqual(['HOOK1', 'HOOK2'], config.get_hooks())
         self.assertEqual("asClassName", config.get_activity_stream())
         self.assertEqual("dataBaseName", config.get_activity_stream_db())
 
-    def test_class_config(self):
+    def test_auto_discover_class_config(self):
         config = metaroot.config.get_config("CLAZZ")
 
         # Inherited from GLOBAL
@@ -31,8 +31,8 @@ class MetarootTests(unittest.TestCase):
         # Defined by class
         self.assertEqual("classQueueName", config.get_mq_queue_name())
         self.assertEqual("handlerClassName2", config.get_mq_handler_class())
-        self.assertEqual("DEBUG", config.get_screen_verbosity())
-        self.assertEqual("INFO", config.get_file_verbosity())
+        self.assertEqual("WARN", config.get_screen_verbosity())
+        self.assertEqual("ERROR", config.get_file_verbosity())
         self.assertEqual("$NONE", config.get_log_file())
         self.assertEqual(['HOOK3', 'HOOK4'], config.get_hooks())
         self.assertEqual("asClassName2", config.get_activity_stream())
@@ -40,3 +40,8 @@ class MetarootTests(unittest.TestCase):
 
         # Custom key/value without a builtin getter
         self.assertEqual("Value1", config.get("CUSTOM1"))
+
+
+if __name__ == '__main__':
+    suite = unittest.TestLoader().loadTestsFromTestCase(MetarootAutoDiscoverConfigTests)
+    unittest.TextTestRunner(verbosity=2).run(suite)
