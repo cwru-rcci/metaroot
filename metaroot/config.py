@@ -149,48 +149,62 @@ def load_file_based_config():
         Exception if an IO or parsing error occurs while loading the config file, or if no config file could not be found
     """
     path = ""
-    ready = False
+    envfile = os.getenv('METAROOT_CONFIG_FILE')
+    config_file = None
     attempts = 0
     global config_logger
 
-    while not ready and attempts < 4:
-        # Test config takes precedence over production config
-        if os.path.exists(path+"metaroot-test.yaml"):
-            print("Using configuration, metaroot-test.yaml. You should rename or remove this file in production")
-            config_file = "metaroot-test.yaml"
+    # Precedence of test file discovery is 1) environment variable specified, 2) metaroot-test.yaml, 3) metaroot.yaml
+    while attempts < 4:
+        if envfile is not None and os.path.exists(envfile):
+            config_file = envfile
+            break
+        elif os.path.exists(path+"metaroot-test.yaml"):
+            config_file = path+"metaroot-test.yaml"
+            break
         elif os.path.exists(path+"metaroot.yaml"):
-            config_file = "metaroot.yaml"
+            config_file = path+"metaroot.yaml"
+            break
         elif os.path.exists(path + "../"):
             path = path + "../"
             attempts = attempts + 1
-            continue
-        else:
-            break
 
-        # Load config, raises exception on error
-        try:
-            stream = open(path+config_file, 'r')
-            config = yaml.safe_load(stream)
-            stream.close()
-            config = config["METAROOT"]
+    # If no configuration file could be located
+    if config_file is None:
+        raise Exception("Could not locate a configuration file")
 
-        except Exception as e:
-            print("An IO or parsing error was encountered while loading the config file {0}".format(path+config_file))
-            raise e
+    # Load config, raises exception on error
+    # print("Loading configuration file {0}".format(config_file))
+    try:
+        stream = open(config_file, 'r')
+        config = yaml.safe_load(stream)
+        stream.close()
+        config = config["METAROOT"]
 
-        # If we found a configuration file, we want to output logging statements in the requested way, so configure a
-        # logger for the config class now
-        wrapper = Config()
-        wrapper.populate(config["GLOBAL"])
-        config_logger = get_logger("CONFIG",
-                                   wrapper.get_log_file(),
-                                   wrapper.get_file_verbosity(),
-                                   wrapper.get_screen_verbosity())
+    except Exception as e:
+        print("An IO or parsing error was encountered while loading the config file {0}".format(path+config_file))
+        raise e
 
-        config_logger.info("Loaded first configuration file found at %s", path+config_file)
-        return config
+    # If we found a configuration file, we want to output logging statements in the requested way, so configure a
+    # logger for the config class now
+    wrapper = Config()
+    wrapper.populate(config["GLOBAL"])
+    config_logger = get_logger("CONFIG",
+                               wrapper.get_log_file(),
+                               wrapper.get_file_verbosity(),
+                               wrapper.get_screen_verbosity())
+    config_logger.info("Loaded configuration file %s", config_file)
 
-    raise Exception("Could not locate a configuration file")
+    # Overload message queue connection parameter values with environment variable values if defined
+    params = {'METAROOT_MQUSER': 'MQUSER',
+              'METAROOT_MQPASS': 'MQPASS',
+              'METAROOT_MQHOST': 'MQHOST',
+              'METAROOT_MQPORT': 'MQPORT'}
+    for key in params:
+        if os.getenv(key) is not None:
+            config['GLOBAL'][params[key]] = os.getenv(key)
+
+    return config
 
 
 def get_global_config():
