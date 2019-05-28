@@ -10,7 +10,7 @@ class MetarootEnvfileConfigTests(unittest.TestCase):
 
     def test_envfile_class_config(self):
         config = metaroot.config.get_config("ROUTER")
-        self.assertEqual(["metaroot.tests.test_router.Handler1", "metaroot.tests.test_router.Handler2"],
+        self.assertEqual(["metaroot.tests.test_router_rw.Handler1", "metaroot.tests.test_router_rw.Handler2"],
                          config.get_hooks())
 
 
