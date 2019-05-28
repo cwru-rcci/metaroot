@@ -31,6 +31,7 @@ class Router:
         self._logger.debug("VVVVVV Router Config VVVVVV")
         debug_config(config)
 
+        # Instantiate an activity stream to store a record of requests/responses
         if config.get_activity_stream() != "$NONE":
             self._logger.info("Logging activity using %s", config.get_activity_stream())
             self.__activity_stream = instantiate_object_from_class_path(config.get_activity_stream())
@@ -38,6 +39,7 @@ class Router:
             self._logger.info("***Not recording an activity stream***")
             self.__activity_stream = NullActivityStream()
 
+        # Initialize managers to receive requests
         hooks = config.get_hooks()
         self._managers = []
         for hook in hooks:
@@ -63,6 +65,7 @@ class Router:
                                len(self._managers), len(hooks))
             exit(1)
 
+        # Initialize reactions to take actions relative to requests outcomes
         self._reactions = None
         if config.has("REACTION_HANDLER"):
             self._reactions = instantiate_object_from_class_path(config.get("REACTION_HANDLER"))
@@ -70,6 +73,9 @@ class Router:
             self._logger.info("No reaction handle specified so using DefaultReactions")
             from metaroot.api.reactions import DefaultReactions
             self._reactions = DefaultReactions()
+
+        # Check for read-only operation to block write requests
+        self._read_only = config.get_read_only_enabled()
 
     def __enter__(self):
         """
@@ -109,6 +115,12 @@ class Router:
         """
         status = 0
         all_results = {}
+
+        # If operating in read-only mode, refuse all write requests
+        if self._read_only:
+            if "add" in method_name or "delete" in method_name or "associate" in method_name or \
+               "update" in method_name or "set" in method_name:
+                return Result(470, "Read-only operation is enabled, but write operation requested")
 
         for manager in self._managers:
             # Filter which mangers to target (by default all will be targeted)
