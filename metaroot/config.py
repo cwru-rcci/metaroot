@@ -20,6 +20,7 @@ class ConfigParams(Enum):
     HOOKS = 'HOOKS'
     ACTIVITY_STREAM_CLASS = 'ACTIVITY_STREAM_CLASS'
     ACTIVITY_STREAM_DATABASE = 'ACTIVITY_STREAM_DATABASE'
+    READ_ONLY_ENABLED = 'READ_ONLY_ENABLED'
 
 
 config_logger = None
@@ -85,6 +86,11 @@ class Config:
 
     def get_activity_stream_db(self):
         return self._data[ConfigParams.ACTIVITY_STREAM_DATABASE.value]
+
+    def get_read_only_enabled(self):
+        if ConfigParams.READ_ONLY_ENABLED.value in self._data:
+            return self._data[ConfigParams.READ_ONLY_ENABLED.value] == "Yes"
+        return False
 
 
 def debug_config(config: Config):
