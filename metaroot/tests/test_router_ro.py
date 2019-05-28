@@ -119,11 +119,7 @@ class RouterTest(unittest.TestCase):
     def test_add_group(self):
         with Router() as router:
             result = router.add_group({}, "any")
-            self.assertEqual(0, result.status)
-            self.assertEqual(0, result.response["Handler1"]["status"])
-            self.assertEqual("add_group:handler1", result.response["Handler1"]["response"])
-            self.assertEqual(0, result.response["Handler2"]["status"])
-            self.assertEqual("add_group:handler2", result.response["Handler2"]["response"])
+            self.assertEqual(470, result.status)
 
     def test_get_group(self):
         with Router() as router:
@@ -146,20 +142,12 @@ class RouterTest(unittest.TestCase):
     def test_update_group(self):
         with Router() as router:
             result = router.update_group({}, "any")
-            self.assertEqual(0, result.status)
-            self.assertEqual(0, result.response["Handler1"]["status"])
-            self.assertEqual("update_group:handler1", result.response["Handler1"]["response"])
-            self.assertEqual(0, result.response["Handler2"]["status"])
-            self.assertEqual("update_group:handler2", result.response["Handler2"]["response"])
+            self.assertEqual(470, result.status)
 
     def test_delete_group(self):
         with Router() as router:
             result = router.delete_group("", "any")
-            self.assertEqual(0, result.status)
-            self.assertEqual(0, result.response["Handler1"]["status"])
-            self.assertEqual("delete_group:handler1", result.response["Handler1"]["response"])
-            self.assertEqual(0, result.response["Handler2"]["status"])
-            self.assertEqual("delete_group:handler2", result.response["Handler2"]["response"])
+            self.assertEqual(470, result.status)
 
     def test_exists_group(self):
         with Router() as router:
@@ -173,20 +161,12 @@ class RouterTest(unittest.TestCase):
     def test_add_user(self):
         with Router() as router:
             result = router.add_user({}, "any")
-            self.assertEqual(0, result.status)
-            self.assertEqual(0, result.response["Handler1"]["status"])
-            self.assertEqual("add_user:handler1", result.response["Handler1"]["response"])
-            self.assertEqual(0, result.response["Handler2"]["status"])
-            self.assertEqual("add_user:handler2", result.response["Handler2"]["response"])
+            self.assertEqual(470, result.status)
 
     def test_update_user(self):
         with Router() as router:
             result = router.update_user({}, "any")
-            self.assertEqual(0, result.status)
-            self.assertEqual(0, result.response["Handler1"]["status"])
-            self.assertEqual("update_user:handler1", result.response["Handler1"]["response"])
-            self.assertEqual(0, result.response["Handler2"]["status"])
-            self.assertEqual("update_user:handler2", result.response["Handler2"]["response"])
+            self.assertEqual(470, result.status)
 
     def test_get_user(self):
         with Router() as router:
@@ -200,11 +180,7 @@ class RouterTest(unittest.TestCase):
     def test_delete_user(self):
         with Router() as router:
             result = router.delete_user("", "any")
-            self.assertEqual(0, result.status)
-            self.assertEqual(0, result.response["Handler1"]["status"])
-            self.assertEqual("delete_user:handler1", result.response["Handler1"]["response"])
-            self.assertEqual(0, result.response["Handler2"]["status"])
-            self.assertEqual("delete_user:handler2", result.response["Handler2"]["response"])
+            self.assertEqual(470, result.status)
 
     def test_exists_user(self):
         with Router() as router:
@@ -218,38 +194,22 @@ class RouterTest(unittest.TestCase):
     def test_set_user_default_group(self):
         with Router() as router:
             result = router.set_user_default_group("", "", "any")
-            self.assertEqual(0, result.status)
-            self.assertEqual(0, result.response["Handler1"]["status"])
-            self.assertEqual("set_user_default_group:handler1", result.response["Handler1"]["response"])
-            self.assertEqual(0, result.response["Handler2"]["status"])
-            self.assertEqual("set_user_default_group:handler2", result.response["Handler2"]["response"])
+            self.assertEqual(470, result.status)
 
     def test_associate_user_to_group(self):
         with Router() as router:
             result = router.associate_user_to_group("", "", "any")
-            self.assertEqual(0, result.status)
-            self.assertEqual(0, result.response["Handler1"]["status"])
-            self.assertEqual("associate_user_to_group:handler1", result.response["Handler1"]["response"])
-            self.assertEqual(0, result.response["Handler2"]["status"])
-            self.assertEqual("associate_user_to_group:handler2", result.response["Handler2"]["response"])
+            self.assertEqual(470, result.status)
 
     def test_disassociate_user_from_group(self):
         with Router() as router:
             result = router.disassociate_user_from_group("", "", "any")
-            self.assertEqual(0, result.status)
-            self.assertEqual(0, result.response["Handler1"]["status"])
-            self.assertEqual("disassociate_user_from_group:handler1", result.response["Handler1"]["response"])
-            self.assertEqual(0, result.response["Handler2"]["status"])
-            self.assertEqual("disassociate_user_from_group:handler2", result.response["Handler2"]["response"])
+            self.assertEqual(470, result.status)
 
     def test_disassociate_users_from_group(self):
         with Router() as router:
             result = router.disassociate_users_from_group([], "", "any")
-            self.assertEqual(0, result.status)
-            self.assertEqual(0, result.response["Handler1"]["status"])
-            self.assertEqual("disassociate_users_from_group:handler1", result.response["Handler1"]["response"])
-            self.assertEqual(0, result.response["Handler2"]["status"])
-            self.assertEqual("disassociate_users_from_group:handler2", result.response["Handler2"]["response"])
+            self.assertEqual(470, result.status)
 
 
 if __name__ == '__main__':
