@@ -1,0 +1,65 @@
+# This configuration is specified via os.environ['METAROOT_CONFIG_FILE']=metaroot-integration-tests-ro.yaml at the start
+# of tests that use the message queue
+METAROOT:
+    # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #
+    # Global configuration parameters are inherited by all other configurations
+    #
+    # #
+    GLOBAL:
+        MQUSER: not-set # You need to set the credentials via editing this file or using environment variables
+        MQPASS: not-set #
+        MQHOST: 127.0.0.1
+        MQPORT: 5672
+        LOG_FILE: $NONE
+        FILE_VERBOSITY: WARN
+        SCREEN_VERBOSITY: WARN
+
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #
+    # Class based configurations: a class that need configuration information will attempt to find it here by looking for
+    # a key that is class.__name__.upper()
+    #
+    # #
+
+    # The event API dispatches events, returning the delivery status of the message (fast)
+    EVENTAPI:
+        MQNAME: api_event_test
+
+    # The method API uses RPC where remote calls return results (slow)
+    METHODCLIENTAPI:
+        MQNAME: api_method_test
+        MQHDLR : metaroot.tests.test_method_api.MethodAPIRequestHandler
+
+    # The event API uses dispatch model of producer/consumer  (slow)
+    EVENTCLIENTAPI:
+        MQNAME: api_event_test
+        MQHDLR : metaroot.tests.test_event_api.EventAPIRequestHandler
+
+    # The ROUTER has methods that match each API event, and when a method is called, the ROUTER calls the same method on all
+    # configured HOOKS (via RPC) and collects the overall result
+    ROUTER:
+        HOOKS: ["metaroot.tests.test_router_ro.Handler1", "metaroot.tests.test_router_ro.Handler2" ]
+        ACTIVITY_STREAM_CLASS: "$NONE"
+        REACTION_HANDLER: metaroot.api.reactions.DefaultReactions
+        READ_ONLY_ENABLED: "Yes"
+
+    # The router initiates reactions to the result of each operation. For the test we are using the builtin API default
+    # reactions which just log verbose error messages if an operation failed
+    DEFAULTREACTIONS:
+        REACTION_NOTIFY: root@localhost
+
+    # # # # # # # # # # # # # # # # # # # # # # # # # #
+    #
+    # Named configurations: a method that requires configuration as input accepts a key as an argument which is used to
+    # locate the configuration here
+    #
+    # #
+    EVENT_TEST:
+        MQNAME: event_test
+        MQHDLR: metaroot.tests.test_producer_consumer.OrderedHandler
+
+    RPC_TEST:
+        MQNAME: rpc_test
+        MQHDLR: metaroot.tests.test_rpc_client_server.OrderedHandler
