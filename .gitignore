@@ -12,6 +12,7 @@ MANIFEST.in
 *.yaml
 !metaroot-test.yaml
 !metaroot-integration-tests.yaml
+!metaroot-integration-tests-ro.yaml
 
 *.log
 *.sh
