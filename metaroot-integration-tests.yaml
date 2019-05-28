@@ -40,7 +40,7 @@ METAROOT:
     # The ROUTER has methods that match each API event, and when a method is called, the ROUTER calls the same method on all
     # configured HOOKS (via RPC) and collects the overall result
     ROUTER:
-        HOOKS: ["metaroot.tests.test_router.Handler1", "metaroot.tests.test_router.Handler2" ]
+        HOOKS: ["metaroot.tests.test_router_rw.Handler1", "metaroot.tests.test_router_rw.Handler2" ]
         ACTIVITY_STREAM_CLASS: "$NONE"
         REACTION_HANDLER: metaroot.api.reactions.DefaultReactions
 
