@@ -58,19 +58,19 @@ class RPCClient:
         """
         Callback to log cases where the server began rejecting messages
         """
-        self.logger.WARN("The connection has been blocked by the server")
+        self.logger.warning("The connection has been blocked by the server")
 
     def _connection_unblocked_cb(self, frame):
         """
         Callback to log cases where the server resumed accepting messages after a period of rejecting them
         """
-        self.logger.WARN("The connection has been unblocked")
+        self.logger.warning("The connection has been unblocked")
 
     def _connection_closed_cb(self, frame):
         """
         Callback to log cases where the connection closed unexpectedly
         """
-        self.logger.WARN("The connection closed")
+        self.logger.warning("The connection closed")
 
     def connect(self) -> bool:
         """
@@ -148,7 +148,7 @@ class RPCClient:
             if not self.connection.is_closed:
                 self.connection.close()
         except Exception as e:
-            self.logger.warn("closing connection raised an exception")
+            self.logger.warning("closing connection raised an exception")
 
     def send(self, obj: object) -> Result:
         """
