@@ -29,7 +29,7 @@ def get_log_level(level: str):
     """
     levels = {"DEBUG": logging.DEBUG,
               "INFO": logging.INFO,
-              "WARN": logging.WARN,
+              "WARN": logging.WARNING,
               "ERROR": logging.ERROR,
               "CRITICAL": logging.CRITICAL,
               "FATAL": logging.FATAL}
@@ -143,21 +143,13 @@ def create_rpc_wrapper(clazz):
         if method_name.startswith("__"):
             continue
 
-        print("    \"\"\"")
-        print("    An RPC wrapper to the method {0}.{1}".format(clazz, method_name))
-        print("")
-        print("    See Also")
-        print("    --------")
-        print("    {0}.{1}".format(clazz, method_name))
-        print("    \"\"\"")
-        print("    def {0}(self".format(method_name), end='')
-
         # Lookup the requested method in the handler object
         try:
             method = getattr(obj, method_name)
         except AttributeError:
             print("The method {0} is not defined on the argument class {1}".format(method_name, type(obj).__name__))
             exit(1)
+        print("    def {0}(self".format(method_name), end='')
 
         # Validate arguments match the method signature
         arguments = inspect.signature(method).parameters
@@ -165,6 +157,15 @@ def create_rpc_wrapper(clazz):
             print(", {0}".format(argument_name), end='')
 
         print(") -> Result:")
+
+        print("        \"\"\"")
+        print("        An RPC wrapper to the method {0}.{1}".format(clazz, method_name))
+        print("")
+        print("        See Also")
+        print("        --------")
+        print("        {0}.{1}".format(clazz, method_name))
+        print("        \"\"\"")
+
         print("        request = {{'action': '{0}',".format(method_name))
         for argument_name in arguments:
             print("                   '{0}': {1},".format(argument_name, argument_name))
@@ -215,21 +216,13 @@ def create_producer_wrapper(clazz):
         if method_name.startswith("__"):
             continue
 
-        print("    \"\"\"")
-        print("    A Producer wrapper to the method {0}.{1}".format(clazz, method_name))
-        print("")
-        print("    See Also")
-        print("    --------")
-        print("    {0}.{1}".format(clazz, method_name))
-        print("    \"\"\"")
-        print("    def {0}(self".format(method_name), end='')
-
         # Lookup the requested method in the handler object
         try:
             method = getattr(obj, method_name)
         except AttributeError:
             print("The method {0} is not defined on the argument class {1}".format(method_name, type(obj).__name__))
             exit(1)
+        print("    def {0}(self".format(method_name), end='')
 
         # Validate arguments match the method signature
         arguments = inspect.signature(method).parameters
@@ -237,6 +230,15 @@ def create_producer_wrapper(clazz):
             print(", {0}".format(argument_name), end='')
 
         print(") -> Result:")
+
+        print("        \"\"\"")
+        print("        A Producer wrapper to the method {0}.{1}".format(clazz, method_name))
+        print("")
+        print("        See Also")
+        print("        --------")
+        print("        {0}.{1}".format(clazz, method_name))
+        print("        \"\"\"")
+
         print("        request = {{'action': '{0}',".format(method_name))
         for argument_name in arguments:
             print("                   '{0}': {1},".format(argument_name, argument_name))
