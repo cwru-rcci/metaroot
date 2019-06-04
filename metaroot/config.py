@@ -131,7 +131,6 @@ def get_config(key: str):
     try:
         config.populate(auto["GLOBAL"])
         config.populate(auto[key])
-        ready = True
         config_logger.info("%s using auto-configuration from global", key)
         return config
     except Exception:
