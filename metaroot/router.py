@@ -405,6 +405,49 @@ class Router:
         """
         return self._safe_call("list_users", [], managers)
 
+    def validate_users(self, names: list, managers: object):
+        """
+        Removes user names from the argument list that are invalid, returning the list containing only valid
+        user names. If this method is implemented, it usually means that validation requires lookup in a backend
+        database.
+
+        Parameters
+        ----------
+        names: list
+            User names to validate
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
+
+        Returns
+        -------
+        Result
+            Result.status is 0 for success, > 0 on error.
+            Result.response is the list of names that were valid
+        """
+        return self._safe_call("validate_users", [names], managers)
+
+    def roles_user(self, name: str, managers: object):
+        """
+        Determine what roles this user is authorized to take in system interaction. This does not imply that the user
+        has actually been provisioned in the system.
+
+        Parameters
+        ----------
+        name: str
+            User name
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
+
+        Returns
+        -------
+        Result
+            Result.status is 0 for success, > 0 on error.
+            Result.response is the list of names that were valid
+        """
+        return self._safe_call("roles_user", [name], managers)
+
     def delete_user(self, name: str, managers: object) -> Result:
         """
         Delete a user from each configured Manager

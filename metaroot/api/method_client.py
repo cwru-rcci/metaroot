@@ -151,6 +151,56 @@ class MethodClientAPI(BaseClient):
                    }
         return self._call(request)
 
+    def validate_users(self, names: list, managers="any"):
+        """
+        Removes user names from the argument list that are invalid, returning the list containing only valid
+        user names. If this method is implemented, it usually means that validation requires lookup in a backend
+        database.
+
+        Parameters
+        ----------
+        names: list
+            User names to validate
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
+
+        Returns
+        -------
+        Result
+            Result.status is 0 for success, > 0 on error.
+            Result.response is the list of names that were valid
+        """
+        request = {'action': 'validate_users',
+                   'names': names,
+                   'managers': managers
+                   }
+        return self._call(request)
+
+    def roles_user(self, name: str, managers="any"):
+        """
+        Report what roles this user is authorized to take in system interaction. This does not imply that the user
+        has actually been provisioned in the system.
+
+        Parameters
+        ----------
+        name: str
+            User name
+        managers: object
+            Either the string "any" meaning all managers that implement the method will be called, or a list of
+            manager class names that should be called
+
+        Returns
+        -------
+        Result
+            Result.status is 0 for success, > 0 on error.
+            Result.response is the list of names that were valid
+        """
+        request = {'action': 'roles_user',
+                   'name': name,
+                   'managers': managers}
+        return self._call(request)
+
     def list_groups(self, managers="any") -> Result:
         """
         Enumerate all group names that are defined in the backend
