@@ -13,6 +13,7 @@ METAROOT:
         HOOKS: ['HOOK1', 'HOOK2']
         ACTIVITY_STREAM_CLASS : 'asClassName'
         ACTIVITY_STREAM_DATABASE: 'dataBaseName'
+        NOTIFY_ON_ERROR: root@localhost
 
     CLAZZ:
         MQNAME: 'classQueueName'

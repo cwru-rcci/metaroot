@@ -14,6 +14,7 @@ METAROOT:
         LOG_FILE: $NONE
         FILE_VERBOSITY: WARN
         SCREEN_VERBOSITY: WARN
+        NOTIFY_ON_ERROR: root@localhost
 
 
     # # # # # # # # # # # # # # # # # # # # # # # # # #
