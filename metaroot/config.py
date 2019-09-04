@@ -21,6 +21,9 @@ class ConfigParams(Enum):
     ACTIVITY_STREAM_CLASS = 'ACTIVITY_STREAM_CLASS'
     ACTIVITY_STREAM_DATABASE = 'ACTIVITY_STREAM_DATABASE'
     READ_ONLY_ENABLED = 'READ_ONLY_ENABLED'
+    SSL = 'SSL'
+    SSL_VERIFY_MODE = 'SSL_VERIFY_MODE'
+    SSL_NOCHECK_HOSTNAME = 'SSL_NOCHECK_HOSTNAME'
 
 
 config_logger = None
@@ -88,9 +91,16 @@ class Config:
         return self._data[ConfigParams.ACTIVITY_STREAM_DATABASE.value]
 
     def get_read_only_enabled(self):
-        if ConfigParams.READ_ONLY_ENABLED.value in self._data:
-            return self._data[ConfigParams.READ_ONLY_ENABLED.value] == "Yes"
-        return False
+        return ConfigParams.READ_ONLY_ENABLED.value in self._data
+
+    def get_ssl(self):
+        return ConfigParams.SSL.value in self._data
+
+    def get_ssl_verify_mode(self):
+        return self._data[ConfigParams.SSL_VERIFY_MODE.value]
+
+    def get_ssl_nocheck_hostname(self):
+        return ConfigParams.SSL_NOCHECK_HOSTNAME.value in self._data
 
 
 def debug_config(config: Config):
