@@ -13,7 +13,7 @@ class DefaultReactions:
     """
 
     @staticmethod
-    def occur_in_response_to(clazz: str, action: str, payload: object, result: Result):
+    def occur_in_response_to(clazz: str, action: str, payload: object, result: Result, n_priors: int) -> int:
         """
         Evaluates the result of an action and performs additional actions as necessary
 
@@ -27,6 +27,10 @@ class DefaultReactions:
             The argument that were passed to the method
         result: Result
             The result of the method call
+        n_priors: int
+            A value indicating the number of reactions that have occurred during the requested operation. I.e., this
+            value is set to 0 as the router begins calling methods of each manager implementing the current request
+            action, and it increases by one each time a Result from a manager operation triggers a reaction.
         """
         global config
 
@@ -40,3 +44,4 @@ class DefaultReactions:
                        "<tr><td>Result Status</td><td>"+str(result.status)+"</td></tr>" +
                        "<tr><td>Result Payload</td><td>"+str(result.response)+"</td></tr>" +
                        "</table>")
+        return 0
