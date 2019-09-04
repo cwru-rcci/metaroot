@@ -7,6 +7,8 @@ import time
 from metaroot.api.result import Result
 from metaroot.config import Config
 from metaroot.utils import get_logger
+from metaroot.amqps import get_ssl_context_from_config
+from metaroot.api.notifications import send_email
 
 
 class RPCClient:
@@ -84,10 +86,17 @@ class RPCClient:
         try:
             # Pretty standard connection stuff
             credentials = pika.PlainCredentials(self.config.get_mq_user(), self.config.get_mq_pass())
+
+            ssl_options = None
+            if self.config.get_ssl():
+                self.logger.info("Will attempt to connect to AMQP server using SSL")
+                ssl_options = pika.SSLOptions(get_ssl_context_from_config(self.config))
+
             parameters = pika.ConnectionParameters(host=self.config.get_mq_host(),
                                                    port=self.config.get_mq_port(),
                                                    virtual_host='/',
                                                    credentials=credentials,
+                                                   ssl_options=ssl_options,
                                                    heartbeat=30)
             self.connection = pika.BlockingConnection(parameters)
             self.connection.add_on_connection_blocked_callback(self._connection_blocked_cb)
@@ -197,15 +206,27 @@ class RPCClient:
             attempts = attempts + 1
         if not_sent:
             self.logger.error("Failed to deliver message %s:%s", self.queue, message.rstrip())
+            send_email(self.config.get("NOTIFY_ON_ERROR"),
+                       "Message delivery failure: " + self.__class__.__name__,
+                       "Failed to deliver message {0}:{1}".format(self.queue, message.rstrip()))
             return Result(470, "Message could not be delivered")
 
         # Wait for response
-        while self.response is None:
+        attempts = 1
+        while self.response is None and attempts < 36:
             self.logger.debug("Waiting for callback response to %s", str(obj))
             # Process events in
             self.connection.process_data_events(time_limit=5)
-
+            attempts = attempts + 1
         self.corr_id = None
+
+        # If timed out waiting for response
+        if attempts == 36:
+            self.logger.error("Operation timed out waiting for a response to %s:%s", self.queue, message.rstrip())
+            send_email(self.config.get("NOTIFY_ON_ERROR"),
+                       "RPC timeout failure: " + self.__class__.__name__,
+                       "No response received for message {0}:{1}".format(self.queue, message.rstrip()))
+            return Result(471, "Operation timed out waiting for a response")
 
         # Decode the response dict as YAML
         try:
