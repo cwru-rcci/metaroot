@@ -4,8 +4,11 @@ import yaml
 import sys
 import inspect
 import time
+import ssl
 import metaroot.config
 import metaroot.utils
+from metaroot.amqps import get_ssl_context_from_config
+from metaroot.api.notifications import send_email
 
 
 class RPCServer:
@@ -108,6 +111,9 @@ class RPCServer:
             return method(*args).to_transport_format()
         except Exception as e:
             self._logger.exception(e)
+            send_email(self._config.get("NOTIFY_ON_ERROR"),
+                       "Method call error: " + self._config.get_mq_handler_class(),
+                       str(e))
             return self.get_error_response(455)
 
     def consume_callback(self, ch, method, props, body):
@@ -218,10 +224,17 @@ class RPCServer:
         try:
             # Pretty standard connection stuff (user, password, etc)
             credentials = pika.PlainCredentials(self._config.get_mq_user(), self._config.get_mq_pass())
+
+            ssl_options = None
+            if self._config.get_ssl():
+                self._logger.info("Will attempt to connect to AMQP server using SSL")
+                ssl_options = pika.SSLOptions(get_ssl_context_from_config(self._config))
+
             parameters = pika.ConnectionParameters(host=self._config.get_mq_host(),
                                                    port=self._config.get_mq_port(),
                                                    virtual_host='/',
                                                    credentials=credentials,
+                                                   ssl_options=ssl_options,
                                                    heartbeat=30)
             self._connection = pika.BlockingConnection(parameters)
             self._channel = self._connection.channel()
@@ -296,6 +309,12 @@ class RPCServer:
                                   self._config.get_mq_host(),
                                   self._config.get_mq_port(),
                                   connect_attempts)
+                send_email(self._config.get("NOTIFY_ON_ERROR"),
+                           "RPC Server (re)connect for " + self._config.get_mq_handler_class(),
+                           "Connected to message host {0}:{1} after {2} attempts".format(
+                               self._config.get_mq_host(),
+                               self._config.get_mq_port(),
+                               connect_attempts))
                 connect_attempts = 1
 
                 try:
@@ -303,12 +322,18 @@ class RPCServer:
                 except KeyboardInterrupt as e:
                     self._logger.warning("Interrupted by keyboard input.")
                     break
-                except (pika.exceptions.ConnectionClosed, pika.exceptions.ChannelClosed) as e:
+                except (pika.exceptions.AMQPConnectionError,
+                        pika.exceptions.ConnectionClosed,
+                        pika.exceptions.ChannelClosed,
+                        pika.exceptions.StreamLostError) as e:
                     self._logger.exception(e)
-                    self._logger.error("Will attempt to reconnect")
+                    self._logger.error("Consume loop broken...will attempt to reconnect")
                 except Exception as e:
                     self._logger.exception(e)
-                    self._logger.error("Will not attempt to reconnect")
+                    self._logger.error("Consume loop broken...will NOT attempt to reconnect")
+                    send_email(self._config.get("NOTIFY_ON_ERROR"),
+                               "RPC Server Exited: "+self._config.get_mq_handler_class(),
+                               str(e))
                     break
 
         return 1
